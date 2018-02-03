@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaghChal", "BaghChal\BaghCh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaghChalTests", "BaghChalTests\BaghChalTests.csproj", "{827C67B0-90C5-4C21-B57A-95B1F7935A45}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaghChalConsoleApplication", "BaghChalConsoleApplication\BaghChalConsoleApplication.csproj", "{73A2EDD5-D318-439F-9508-32F7E2F6C96F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{827C67B0-90C5-4C21-B57A-95B1F7935A45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{827C67B0-90C5-4C21-B57A-95B1F7935A45}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{827C67B0-90C5-4C21-B57A-95B1F7935A45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73A2EDD5-D318-439F-9508-32F7E2F6C96F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73A2EDD5-D318-439F-9508-32F7E2F6C96F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73A2EDD5-D318-439F-9508-32F7E2F6C96F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73A2EDD5-D318-439F-9508-32F7E2F6C96F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -56,19 +56,34 @@ namespace BaghChal
             if (IsPieceAtIndex(Pieces.Any, index))
                 throw new Exception("Position already occupied.");
 
-            long shiftMe = 0;
-            Board[(int)piece] = Board[(int)piece] | (shiftMe << index);
+            long shiftMe = 1L;
+            long shift = (shiftMe << index);
+            Board[(int)piece] = Board[(int)piece] | shift;
+            Board[(int)Pieces.Any] = Board[(int)Pieces.Any] | shift;
         }
 
         public bool IsPieceAtIndex(Pieces type, int index)
         {
-            long shiftMe = 0;
-            return ((shiftMe << index) & Board[(int)type]) != 0;
+            long shiftMe = 1L;
+            return ((shiftMe << index) & Board[(int)type]) != 0L;
+        }
+
+        public Pieces GetPieceAtIndex(int index)
+        {
+            long shiftMe = 1L;
+            if (((shiftMe << index) & Board[(int)Pieces.Any]) != 0L) {
+                if (((shiftMe << index) & Board[(int)Pieces.Tiger]) != 0L)
+                    return Pieces.Tiger;
+                else
+                    return Pieces.Goat;
+            }
+            else
+                return Pieces.Empty;
         }
     }
 
 
-    public class BoardPosition
+    public struct BoardPosition
     {
         public int X { get; set; }
         public int Y { get; set; }
