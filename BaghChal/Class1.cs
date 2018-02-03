@@ -44,6 +44,22 @@ namespace BaghChal
             Board = new long[3];
         }
 
+        /// <summary>
+        /// For test. During game, only goats can be placed.
+        /// </summary>
+        /// <param name="piece"></param>
+        /// <param name="index"></param>
+        public void PlacePeiceAtIndex(Pieces piece, int index)
+        {
+            if (piece != Pieces.Tiger && piece != Pieces.Goat)
+                throw new Exception("Can only place tigers and goats on board.");
+            if (IsPieceAtIndex(Pieces.Any, index))
+                throw new Exception("Position already occupied.");
+
+            long shiftMe = 0;
+            Board[(int)piece] = Board[(int)piece] | (shiftMe << index);
+        }
+
         public bool IsPieceAtIndex(Pieces type, int index)
         {
             long shiftMe = 0;
