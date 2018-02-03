@@ -25,8 +25,8 @@ namespace BaghChal
     {
         Tiger = 0,
         Goat = 1,
-        Any = 3,
-        Empty = 4
+        Any = 2,
+        Empty = 3
     }
 
     public class GameBoard
@@ -37,11 +37,17 @@ namespace BaghChal
         /// Second index is for the bords position, starting at the top left.
         /// New rows wraps after seven positions. Outer rows are out of bounds.
         /// </summary>
-        public byte[,] Board { get; set; }
+        public long[] Board { get; set; }
 
         public GameBoard()
         {
-            Board = new byte[3, 48];
+            Board = new long[3];
+        }
+
+        public bool IsPieceAtIndex(Pieces type, int index)
+        {
+            long shiftMe = 0;
+            return ((shiftMe << index) & Board[(int)type]) != 0;
         }
     }
 
@@ -53,12 +59,59 @@ namespace BaghChal
 
         public BoardPosition(int x, int y)
         {
-            this.X = x;
-            this.Y = y;
+            X = x;
+            Y = y;
         }
     }
+
+    public enum InvalidGameMove : int
+    {
+        OutOfBounds = 1,
+        TryToMoveIncorrectPiece = 2,
+        TargetLocationOccupied = 3,
+    }
+
+    public class GameMoveException : Exception
+    {
+        public InvalidGameMove TypeOfViolation { get; set; }
+
+        public GameMoveException(string message, InvalidGameMove type) : base(message)
+        {
+            TypeOfViolation = type;
+        }
+    }
+
     public class GameMove
     {
+
+        public bool TryMove(Pieces piece, BoardPosition startPosition, BoardPosition endPosition, GameBoard board)
+        {
+            if(IsOutOfBounds(startPosition) || IsOutOfBounds(endPosition))
+            {
+                throw new GameMoveException("Start or end position is out of bounds.", InvalidGameMove.OutOfBounds);
+            }
+            else if (IsPieceAtLocation(piece, startPosition, board))
+            {
+                throw new GameMoveException("Selected piece is not at start position.", InvalidGameMove.TryToMoveIncorrectPiece);
+            }
+            else if (IslocationEmpty(endPosition, board))
+            {
+                throw new GameMoveException("Target location is not empty.", InvalidGameMove.TargetLocationOccupied);
+            }
+            else
+                return false;
+        }
+
+        private bool IsPieceAtLocation(Pieces piece, BoardPosition position, GameBoard board)
+        {
+            return board.IsPieceAtIndex(piece, TranslateToBoardIndex(position));
+        }
+
+        private bool IslocationEmpty(BoardPosition position, GameBoard board)
+        {
+            return !IsPieceAtLocation(Pieces.Any, position, board);
+        }
+
         public bool IsOutOfBounds(BoardPosition position)
         {
             return position.X < 0 || position.Y < 0; // TODO: Implement logic.
