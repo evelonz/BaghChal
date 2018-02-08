@@ -37,11 +37,35 @@ namespace BaghChal
         /// Second index is for the bords position, starting at the top left.
         /// New rows wraps after seven positions. Outer rows are out of bounds.
         /// </summary>
-        public long[] Board { get; set; }
+        private long[] Board { get; set; }
 
-        public GameBoard()
+        /// <summary>
+        /// The player who may move next. Tiger starts.
+        /// </summary>
+        public Pieces CurrentUsersTurn { get; private set; } = Pieces.Tiger;
+
+        /// <summary>
+        /// Set up a default game with four tigers in the corner.
+        /// </summary>
+        public GameBoard() : this((Pieces.Tiger, (1, 1)), (Pieces.Tiger, (5, 1)), (Pieces.Tiger, (1, 5)), (Pieces.Tiger, (5, 5)))
+        {
+        }
+
+        /// <summary>
+        /// Load a preset board with units in the given positions.
+        /// Does not include history, so will be unable to undo moves or 
+        /// fully determain of a board state has occured earlier.
+        /// </summary>
+        /// <param name="args"></param>
+        public GameBoard(params (Pieces pieceType, (int x, int y) position)[] args)
         {
             Board = new long[3];
+
+            foreach (var piece in args)
+            {
+                var index = GameMove.TranslateToBoardIndex(piece.position);
+                PlacePeiceAtIndex(piece.pieceType, index);
+            }
         }
 
         /// <summary>
@@ -80,19 +104,111 @@ namespace BaghChal
             else
                 return Pieces.Empty;
         }
+
+        public MoveResult Move(Pieces piece, (int x, int y) start, (int x, int y) end)
+        {
+            if (piece != CurrentUsersTurn)
+                return MoveResult.NotPlayersTurn;
+            if (IsOutOfBounds(start) || IsOutOfBounds(end))
+                return MoveResult.OutOfBounds;
+            var startIndex = TranslateToBoardIndex(start);
+            if (piece != GetPieceAtIndex(startIndex))
+                return MoveResult.TryToMoveIncorrectPiece;
+            var endIndex = TranslateToBoardIndex(end);
+            if (IsPieceAtIndex(Pieces.Any, endIndex))
+                return MoveResult.TargetLocationOccupied;
+            var moveType = PositionsAreLinked(startIndex, endIndex);
+            if (moveType == MoveType.OutOfReach)
+                return MoveResult.TargetLocationOutOfReach;
+            // TODO: check that goat is between tiger and location.
+            if (moveType == MoveType.Jump && piece == Pieces.Tiger && false)
+                return MoveResult.TargetLocationOutOfReach;
+
+            return MoveResult.MoveOK;
+        }
+
+        public static MoveType PositionsAreLinked(int start, int end)
+        {
+            // Skipping check of Out of bounds here. Assume it's done.
+            // Are positions up, down, left, and right are connected.
+            // Assume positive indexes here.
+            var dx = Math.Abs(start - end);
+            if (dx == 1 || dx == 7)
+                return MoveType.Linked;
+            // A jump is simply a move of two steps. Though only tigers can do it and there must be a goat between.
+            // Though this code only checks if it's a possible move from a board perspective.
+            else if (dx == 2 || dx == 14)
+                return MoveType.Jump;
+            // There are also diagonal lines going going from even coordinates (-2, 0, 2, 4) down right
+            // and the same down left (2, 4, 6, 8)
+            // First are multiples of 8. Second case are multiples of 6.
+            // Since this can occure on other lines as well, we have to check that one position is on a line.
+            // All diagonal lines are on even squares.
+            // Fun note. % is not modulus, but reminder, in C#.
+            var even = (start % 2) == 0;
+            if (even && (dx == 6 || dx == 8))
+                return MoveType.Linked;
+            // Diagonal jump.
+            else if (even && (dx == 12 || dx == 16))
+                return MoveType.Jump;
+            else
+                return MoveType.OutOfReach;
+        }
+
+        /// <summary>
+        /// Check that a jump move is valued.
+        /// Can only be done by a tiger.
+        /// Must be done over a goat, into a empty space.
+        /// </summary>
+        private bool IsJumpValid(Pieces piece, int start, int end)
+        {
+            // TODO: Check if jump to self? Check if target empty? Currently assumes these things.
+            if (piece != Pieces.Tiger)
+                return false;
+            if (IsPieceAtIndex(Pieces.Any, end))
+                return false;
+
+            var middleIndex = ((start - end) / 2) + end;
+            if (IsPieceAtIndex(Pieces.Goat, middleIndex))
+                return true;
+            else
+                return false;
+        }
+        
+        /// <summary>
+        /// Translate a 1 indexed x, y coordinate into a index position on the 
+        /// internal board storage.
+        /// </summary>
+        private static int TranslateToBoardIndex((int x, int y) position)
+        {
+            // TODO: Should perhaps check fo overflow, in case the IsOutOfBounds check uses index instead of position.
+            return position.x + (position.y * 7);
+        }
+
+        private bool IsOutOfBounds((int x, int y) position)
+        {
+            // TODO: Is it better to check using index instead?
+            return position.x < 1 || position.y < 1 ||
+                position.x > 5 || position.y > 5;
+        }
     }
 
-
-    public struct BoardPosition
+    public enum MoveResult : int
     {
-        public int X { get; set; }
-        public int Y { get; set; }
+        MoveOK = 1,
+        OutOfBounds = 2,
+        TryToMoveIncorrectPiece = 3,
+        TargetLocationOccupied = 4,
+        TargetLocationOutOfReach = 5,
+        StartPositionEmpty = 6,
+        NotPlayersTurn = 7,
+    }
 
-        public BoardPosition(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
+    public enum MoveType : int
+    {
+        Linked = 1,
+        Jump = 2,
+        OutOfReach = 3,
     }
 
     public enum InvalidGameMove : int
@@ -115,7 +231,7 @@ namespace BaghChal
     public class GameMove
     {
 
-        public bool TryMove(Pieces piece, BoardPosition startPosition, BoardPosition endPosition, GameBoard board)
+        public bool TryMove(Pieces piece, (int x, int y) startPosition, (int x, int y) endPosition, GameBoard board)
         {
             if(IsOutOfBounds(startPosition) || IsOutOfBounds(endPosition))
             {
@@ -133,28 +249,28 @@ namespace BaghChal
                 return false;
         }
 
-        private bool IsPieceAtLocation(Pieces piece, BoardPosition position, GameBoard board)
+        private bool IsPieceAtLocation(Pieces piece, (int x, int y) position, GameBoard board)
         {
             return board.IsPieceAtIndex(piece, TranslateToBoardIndex(position));
         }
 
-        private bool IslocationEmpty(BoardPosition position, GameBoard board)
+        private bool IslocationEmpty((int x, int y) position, GameBoard board)
         {
             return !IsPieceAtLocation(Pieces.Any, position, board);
         }
 
-        public bool IsOutOfBounds(BoardPosition position)
+        public bool IsOutOfBounds((int x, int y) position)
         {
-            return position.X < 0 || position.Y < 0; // TODO: Implement logic.
+            return position.x < 0 || position.y < 0; // TODO: Implement logic.
         }
 
         /// <summary>
         /// Translate a <see cref="BoardPosition"/> into a index position on 
         /// the internal board storage.
         /// </summary>
-        private int TranslateToBoardIndex(BoardPosition position)
+        public static int TranslateToBoardIndex((int x, int y) position)
         {
-            return position.X + (position.Y % 7);
+            return position.x + (position.y * 7);
         }
     }
 }

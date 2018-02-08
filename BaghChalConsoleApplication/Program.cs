@@ -14,10 +14,10 @@ namespace BaghChalConsoleApplication
 
             var board = new GameBoard();
 
-            board.PlacePeiceAtIndex(Pieces.Tiger, 8);
-            board.PlacePeiceAtIndex(Pieces.Tiger, 12);
-            board.PlacePeiceAtIndex(Pieces.Tiger, 36);
-            board.PlacePeiceAtIndex(Pieces.Tiger, 40);
+            //board.PlacePeiceAtIndex(Pieces.Tiger, 8);
+            //board.PlacePeiceAtIndex(Pieces.Tiger, 12);
+            //board.PlacePeiceAtIndex(Pieces.Tiger, 36);
+            //board.PlacePeiceAtIndex(Pieces.Tiger, 40);
 
             int i = 0;
             PrintGameBoard(board, ++i);
