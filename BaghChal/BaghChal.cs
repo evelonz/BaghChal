@@ -62,7 +62,7 @@ namespace BaghChal
         /// <summary>
         /// Set up a default game with four tigers in the corner.
         /// </summary>
-        public GameBoard() : this("", (Pieces.Tiger, (1, 1)), (Pieces.Tiger, (5, 1)), (Pieces.Tiger, (1, 5)), (Pieces.Tiger, (5, 5)))
+        public GameBoard() : this(0, 0, 0, Pieces.Goat, (Pieces.Tiger, (1, 1)), (Pieces.Tiger, (5, 1)), (Pieces.Tiger, (1, 5)), (Pieces.Tiger, (5, 5)))
         {
         }
 
@@ -87,8 +87,13 @@ namespace BaghChal
         /// </summary>
         /// <param name="args"></param>
         // TODO: Had to add string i since this constructor captured all calls. Why?
-        public GameBoard(string i, params (Pieces pieceType, (int x, int y) position)[] args)
+        public GameBoard(int play, int goatsLeftToPlace, int goatsCaptured, Pieces currentUsersTurn, params (Pieces pieceType, (int x, int y) position)[] args)
         {
+            Ply = play;
+            GoatsLeftToPlace = goatsLeftToPlace;
+            GoatsCaptured = goatsCaptured;
+            CurrentUsersTurn = currentUsersTurn;
+
             Board = new long[3];
 
             foreach (var piece in args)
@@ -141,30 +146,126 @@ namespace BaghChal
             Ply++;
         }
 
-        private bool CheckGameEnd()
+        private bool CheckGameEnd(Pieces piece)
         {
-            if (GoatsCaptured == 5) return true;
-            else if (TigerUnableToMove()) return true;
-            else return false;
+            switch (piece)
+            {
+                case Pieces.Tiger:
+                    return (GoatsCaptured == 5);
+                case Pieces.Goat:
+                    return !TigerAbleToMove();
+                default:
+                    return false;
+            }
         }
 
-        private bool TigerUnableToMove()
+        private bool TigerAbleToMove()
+        {
+            var tigerMoves = GetTigerMoves();
+            foreach (var entry in tigerMoves)
+            {
+                var anyMove = entry.Value.Any(a => a.result == MoveResult.MoveOK || a.result == MoveResult.GoatCaptured);
+                if (anyMove)
+                    return true;
+            }
+            return false;
+        }
+
+        public Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) positions)>> GetTigerMoves()
+        {
+            Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) positions)>> res = new Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) posistion)>>(4);
+            for (int i = 8; i < 41; i++)
+            {
+                if ((Board[(int)Pieces.Tiger] & (1L << i)) > 0)
+                {
+                    List<(MoveResult result, (int x, int y) posistion)> returnValue = new List<(MoveResult result, (int x, int y) posistion)>();
+                    var tigerPosition = TranslateTFromBoardIndex(i);
+                    var linkedPositions = GetLinkedPositions(i);
+                    for (int target = 0; target < linkedPositions.Length; target++)
+                    {
+                        var targetPosition = TranslateTFromBoardIndex(linkedPositions[target]);
+                        var moveResult = TryMove(Pieces.Tiger, tigerPosition, targetPosition);
+                        returnValue.Add((moveResult, targetPosition));
+                    }
+                    // TODO: Now have to check if there are any jump points. Wonder if a filter on goats is faster than just checking all jumps?
+                    linkedPositions = GetJumpLinkedPositions(i);
+                    for (int target = 0; target < linkedPositions.Length; target++)
+                    {
+                        var endIndex = linkedPositions[target];
+                        if (endIndex < 0 || endIndex > 48) continue; // Code to skip out of bounds for jumps.
+                        var targetPosition = TranslateTFromBoardIndex(endIndex);
+                        var moveResult = TryMove(Pieces.Tiger, tigerPosition, targetPosition);
+                        returnValue.Add((moveResult, targetPosition));
+                    }
+                    res.Add(tigerPosition, returnValue);
+                }
+            }
+            return res;
+        }
+
+        public bool GetAllMoves(Pieces piece, (int, int) position)
         {
             // TODO: Implement.
             return false;
         }
 
+        private int[] GetLinkedPositions(int start)
+        {
+            // TODO: Include jump links here all at ones?
+            return new int[] {
+                start - 8, start - 7, start - 6,
+                start - 1,            start + 1,
+                start + 6, start + 7, start + 8,
+            };
+        }
+
+        private int[] GetJumpLinkedPositions(int start)
+        {
+            // TODO: Create a index for positions instead (left up, up, right up, right, and so on.
+            // move is one step in index direction (-8, -7, -6, +1, ...). Jump is just 2 times that.
+            return new int[] {
+                start - 16, start - 14, start - 12,
+                start -  2,             start +  2,
+                start + 12, start + 14, start + 16,
+            };
+        }
+
         public MoveResult Move(Pieces piece, (int x, int y) start, (int x, int y) end)
+        {
+            var move = TryMove(piece, start, end);
+            var endIndex = TranslateToBoardIndex(end);
+            var startIndex = TranslateToBoardIndex(start);
+            switch(move)
+            {
+                case MoveResult.GoatPlaced:
+                    PerformGameMove(piece, -1, endIndex);
+                    return (CheckGameEnd(piece)) ? MoveResult.GoatWin : move;
+                case MoveResult.GoatCaptured:
+                    IsJumpValid(piece, startIndex, endIndex, out int captureIndex);
+                    PerformGameMove(piece, startIndex, endIndex, captureIndex);
+                    return (CheckGameEnd(piece)) ? MoveResult.TigerWin : move;
+                case MoveResult.MoveOK:
+                    PerformGameMove(piece, startIndex, endIndex);
+                    return (CheckGameEnd(piece)) ? MoveResult.GoatWin : move;
+            }
+            return move;
+            
+        }
+
+        public MoveResult TryMove(Pieces piece, (int x, int y) start, (int x, int y) end)
         {
             // Perhaps split the move validation into static and none static?
             if (piece != CurrentUsersTurn)
                 return MoveResult.NotPlayersTurn;
             // If 0,0 is used as start position during goat placement, then check this early before errors on start position is found.
             var endIndex = TranslateToBoardIndex(end);
-            if (piece == Pieces.Goat && start.Equals((0, 0)) && !IsOutOfBounds(end))
+            if (piece == Pieces.Goat && start.Equals((0, 0)))
             {
-                PerformGameMove(piece, -1, endIndex);
-                return (CheckGameEnd()) ? MoveResult.GoatWin : MoveResult.MoveOK;
+                if (IsOutOfBounds(end))
+                    return MoveResult.OutOfBounds;
+                if (IsPieceAtIndex(Pieces.Any, endIndex))
+                    return MoveResult.TargetLocationOccupied;
+                return MoveResult.GoatPlaced;
             }
             if (IsOutOfBounds(start) || IsOutOfBounds(end))
                 return MoveResult.OutOfBounds;
@@ -181,17 +282,17 @@ namespace BaghChal
             {
                 if (IsJumpValid(piece, startIndex, endIndex, out int captureIndex))
                 {
-                    PerformGameMove(piece, startIndex, endIndex, captureIndex);
-                    return (CheckGameEnd()) ? MoveResult.TigerWin : MoveResult.GoatCaptured;
+                    return MoveResult.GoatCaptured;
                 }
                 else
-                    return MoveResult.TargetLocationOutOfReach;
+                    return MoveResult.InvalidJump;
             }
             else
             {
+                if (piece == Pieces.Goat && GoatsLeftToPlace != 0)
+                    return MoveResult.GoatMoveDuringPlacement;
                 // All checks should have passed. Now perform normal 1 slot move.
-                PerformGameMove(piece, startIndex, endIndex);
-                return (CheckGameEnd()) ? MoveResult.GoatWin : MoveResult.MoveOK;
+                return MoveResult.MoveOK;
             }
             
         }
@@ -301,6 +402,17 @@ namespace BaghChal
             return position.x + (position.y * 7);
         }
 
+        /// <summary>
+        /// Translate a 1 indexed x, y coordinate into a index position on the 
+        /// internal board storage.
+        /// </summary>
+        private static (int x, int y) TranslateTFromBoardIndex(int index)
+        {
+            int x = index % 7;
+            int y = index / 7;
+            return (x, y);
+        }
+
         private bool IsOutOfBounds((int x, int y) position)
         {
             // TODO: Is it better to check using index instead?
@@ -323,6 +435,9 @@ namespace BaghChal
         GoatWin = 9,
         Draw = 10,
         GoatCaptured = 11,
+        GoatMoveDuringPlacement = 12,
+        GoatPlaced = 13,
+        InvalidJump = 14,
     }
 
     public enum MoveType : int

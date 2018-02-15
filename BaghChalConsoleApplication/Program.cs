@@ -18,12 +18,18 @@ namespace BaghChalConsoleApplication
             //board.PlacePeiceAtIndex(Pieces.Tiger, 12);
             //board.PlacePeiceAtIndex(Pieces.Tiger, 36);
             //board.PlacePeiceAtIndex(Pieces.Tiger, 40);
+            board = new GameBoard(7, 16, 0, Pieces.Tiger,
+                (Pieces.Tiger, (1, 1)), (Pieces.Tiger, (2, 2)), (Pieces.Tiger, (1, 4)), (Pieces.Tiger, (2, 4)),
+                (Pieces.Goat, (1, 2)), (Pieces.Goat, (1, 3)), (Pieces.Goat, (2, 3)), (Pieces.Goat, (3, 3))
+                );
+
+            
 
             int i = 0;
             PrintGameBoard(board, ++i);
 
             board.PlacePeiceAtIndex(Pieces.Goat, 10);
-
+            var res = board.GetTigerMoves();
             PrintGameBoard(board, ++i);
         }
 
