@@ -103,6 +103,24 @@ namespace BaghChal
             }
         }
 
+        public override string ToString()
+        {
+            char[] symbols = { 'T', 'G', '/', '-', };
+            var sb = new StringBuilder();
+            sb.AppendLine($"=== Ply: {Ply}, P: {CurrentUsersTurn}, GP: {GoatsLeftToPlace}, GC: {GoatsCaptured} ===");
+            for (int row = 1; row < 6; row++)
+            {
+                for (int column = 1; column < 6; column++)
+                {
+                    var piece = GetPieceAtIndex(column + (row * 7));
+                    sb.Append(symbols[(int)piece]);
+                }
+                sb.AppendLine();
+            }
+            sb.AppendLine("=====================================");
+            return sb.ToString();
+        }
+
         /// <summary>
         /// For test. During game, only goats can be placed.
         /// </summary>
@@ -146,7 +164,7 @@ namespace BaghChal
             Ply++;
         }
 
-        private bool CheckGameEnd(Pieces piece)
+        public bool CheckGameEnd(Pieces piece)
         {
             switch (piece)
             {
@@ -179,11 +197,11 @@ namespace BaghChal
                 if ((Board[(int)Pieces.Tiger] & (1L << i)) > 0)
                 {
                     List<(MoveResult result, (int x, int y) posistion)> returnValue = new List<(MoveResult result, (int x, int y) posistion)>();
-                    var tigerPosition = TranslateTFromBoardIndex(i);
+                    var tigerPosition = TranslatetFromBoardIndex(i);
                     var linkedPositions = GetLinkedPositions(i);
                     for (int target = 0; target < linkedPositions.Length; target++)
                     {
-                        var targetPosition = TranslateTFromBoardIndex(linkedPositions[target]);
+                        var targetPosition = TranslatetFromBoardIndex(linkedPositions[target]);
                         var moveResult = TryMove(Pieces.Tiger, tigerPosition, targetPosition);
                         returnValue.Add((moveResult, targetPosition));
                     }
@@ -193,7 +211,7 @@ namespace BaghChal
                     {
                         var endIndex = linkedPositions[target];
                         if (endIndex < 0 || endIndex > 48) continue; // Code to skip out of bounds for jumps.
-                        var targetPosition = TranslateTFromBoardIndex(endIndex);
+                        var targetPosition = TranslatetFromBoardIndex(endIndex);
                         var moveResult = TryMove(Pieces.Tiger, tigerPosition, targetPosition);
                         returnValue.Add((moveResult, targetPosition));
                     }
@@ -202,6 +220,28 @@ namespace BaghChal
             }
             return res;
         }
+
+        public Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) positions)>> GetGoatMoves()
+        {
+            Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) positions)>> res = new Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) posistion)>>();
+            if(GoatsLeftToPlace != 0)
+            {
+                List<(MoveResult result, (int x, int y) posistion)> returnValue = new List<(MoveResult result, (int x, int y) posistion)>();
+                for (int i = 8; i < 41; i++)
+                {
+                    var piece = GetPieceAtIndex(i);
+                    if (piece == Pieces.Empty)
+                        returnValue.Add((MoveResult.MoveOK, TranslatetFromBoardIndex(i)));
+                }
+                res.Add((0, 0), returnValue);
+            }
+            else
+            {
+                // TODO: Implement goat moves.
+            }
+            return res;
+        }
+
 
         public bool GetAllMoves(Pieces piece, (int, int) position)
         {
@@ -406,7 +446,7 @@ namespace BaghChal
         /// Translate a 1 indexed x, y coordinate into a index position on the 
         /// internal board storage.
         /// </summary>
-        private static (int x, int y) TranslateTFromBoardIndex(int index)
+        private static (int x, int y) TranslatetFromBoardIndex(int index)
         {
             int x = index % 7;
             int y = index / 7;

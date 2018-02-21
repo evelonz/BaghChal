@@ -11,8 +11,23 @@ namespace BaghChalConsoleApplication
     {
         static void Main(string[] args)
         {
-
             var board = new GameBoard();
+
+            while(true)
+            {
+                var move = BaghChalAI.MinMax.GetMove(board);
+                var aiRes = board.Move(move.Piece, move.Start, move.End);
+                Console.WriteLine(aiRes);
+                Console.WriteLine(board.ToString());
+                var inputStart = Console.ReadLine().Split(',');
+                var inputEnd = Console.ReadLine().Split(',');
+                if (int.TryParse(inputStart[0], out int xs) && int.TryParse(inputStart[1], out int ys) &&
+                    int.TryParse(inputEnd[0], out int xe) && int.TryParse(inputEnd[1], out int ye)) {
+                    var humanRes = board.Move(board.CurrentUsersTurn, (xs, ys), (xe, ye));
+                    Console.WriteLine(humanRes);
+                }
+                Console.WriteLine(board.ToString());
+            }
 
             //board.PlacePeiceAtIndex(Pieces.Tiger, 8);
             //board.PlacePeiceAtIndex(Pieces.Tiger, 12);
