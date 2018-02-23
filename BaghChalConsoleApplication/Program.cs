@@ -15,17 +15,21 @@ namespace BaghChalConsoleApplication
 
             while(true)
             {
-                var move = BaghChalAI.MinMax.GetMove(board);
-                var aiRes = board.Move(move.Piece, move.Start, move.End);
-                Console.WriteLine(aiRes);
-                Console.WriteLine(board.ToString());
+                
+                Console.WriteLine("Type start coordinate then enter (x,y).");
                 var inputStart = Console.ReadLine().Split(',');
+                Console.WriteLine("Type end coordinate then enter (x,y).");
                 var inputEnd = Console.ReadLine().Split(',');
                 if (int.TryParse(inputStart[0], out int xs) && int.TryParse(inputStart[1], out int ys) &&
                     int.TryParse(inputEnd[0], out int xe) && int.TryParse(inputEnd[1], out int ye)) {
                     var humanRes = board.Move(board.CurrentUsersTurn, (xs, ys), (xe, ye));
                     Console.WriteLine(humanRes);
                 }
+                Console.WriteLine(board.ToString());
+
+                var move = BaghChalAI.MinMax.GetMove(board);
+                var aiRes = board.Move(move.Piece, move.Start, move.End);
+                Console.WriteLine(aiRes + " " + move.ToString());
                 Console.WriteLine(board.ToString());
             }
 

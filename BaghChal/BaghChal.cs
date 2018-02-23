@@ -62,7 +62,7 @@ namespace BaghChal
         /// <summary>
         /// Set up a default game with four tigers in the corner.
         /// </summary>
-        public GameBoard() : this(0, 0, 0, Pieces.Goat, (Pieces.Tiger, (1, 1)), (Pieces.Tiger, (5, 1)), (Pieces.Tiger, (1, 5)), (Pieces.Tiger, (5, 5)))
+        public GameBoard() : this(0, 20, 0, Pieces.Goat, (Pieces.Tiger, (1, 1)), (Pieces.Tiger, (5, 1)), (Pieces.Tiger, (1, 5)), (Pieces.Tiger, (5, 5)))
         {
         }
 
@@ -86,7 +86,6 @@ namespace BaghChal
         /// fully determain of a board state has occured earlier.
         /// </summary>
         /// <param name="args"></param>
-        // TODO: Had to add string i since this constructor captured all calls. Why?
         public GameBoard(int play, int goatsLeftToPlace, int goatsCaptured, Pieces currentUsersTurn, params (Pieces pieceType, (int x, int y) position)[] args)
         {
             Ply = play;
@@ -96,10 +95,10 @@ namespace BaghChal
 
             Board = new long[3];
 
-            foreach (var piece in args)
+            foreach (var (pieceType, position) in args)
             {
-                var index = GameMove.TranslateToBoardIndex(piece.position);
-                PlacePeiceAtIndex(piece.pieceType, index);
+                var index = GameMove.TranslateToBoardIndex(position);
+                PlacePeiceAtIndex(pieceType, index);
             }
         }
 
@@ -164,14 +163,18 @@ namespace BaghChal
             Ply++;
         }
 
-        public bool CheckGameEnd(Pieces piece)
+        public bool CheckGameEnd(Pieces piece, bool checkAfterMove = true)
         {
             switch (piece)
             {
                 case Pieces.Tiger:
-                    return (GoatsCaptured == 5);
-                case Pieces.Goat:
+                    if(checkAfterMove)
+                        return (GoatsCaptured == 5);
                     return !TigerAbleToMove();
+                case Pieces.Goat:
+                    if (checkAfterMove)
+                        return !TigerAbleToMove();
+                    return (GoatsCaptured == 5); 
                 default:
                     return false;
             }
@@ -396,11 +399,14 @@ namespace BaghChal
             // TODO: Fix this code! 3 moves: Place, move, and capture. Capture also use move.
             if (captureIndex != -1)
             {
-                long shiftMe = 1L;
+                var helper = this.Board;
+                var shiftToRemoveGoat = ~(1L << captureIndex);
                 // clear goat.
-                Board[(int)Pieces.Goat] = Board[(int)Pieces.Goat] & ~(shiftMe << captureIndex);
+                Board[(int)Pieces.Goat] = Board[(int)Pieces.Goat] & shiftToRemoveGoat;
+                Board[(int)Pieces.Any] = Board[(int)Pieces.Any] & shiftToRemoveGoat;
                 // Move tiger.
                 // TODO: Can this be done in one operation? Yes, OR the indexes and then XOR the array!
+                // Maybe just OR the Any Bord to save one operation.
                 long shiftToRemove = ~(1L << startIndex);
                 long shift = (1L << endIndex);
                 Board[(int)Pieces.Tiger] = Board[(int)Pieces.Tiger] & shiftToRemove;
@@ -413,7 +419,7 @@ namespace BaghChal
             else if(startIndex == -1)
             {
                 long shift = (1L << endIndex);
-                Board[(int)Pieces.Goat] = Board[(int)Pieces.Goat] | (1L << endIndex);
+                Board[(int)Pieces.Goat] = Board[(int)Pieces.Goat] | shift;
                 Board[(int)Pieces.Any] = Board[(int)Pieces.Any] | shift;
                 GoatsLeftToPlace--;
             }

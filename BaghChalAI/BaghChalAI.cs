@@ -12,7 +12,7 @@ namespace BaghChalAI
         public static GameMove GetMove(GameBoard board)
         {
             var node = new NodeBaseClass(board, board.CurrentUsersTurn, new GameMove(-1));
-            var res = MiniMax(node, 2, true);
+            var res = MiniMax(node, 4, true);
             return res;
         }
 
@@ -25,7 +25,8 @@ namespace BaghChalAI
             {
                 var bestVal = int.MinValue;
                 GameMove bestMove = null;
-                foreach (var move in node.GetChildNodes())
+                var childNodes = node.GetChildNodes();
+                foreach (var move in childNodes)
                 {
                     var res = MiniMax(move, depth - 1, !maximizing);
                     if(res.Score > bestVal)
@@ -64,7 +65,7 @@ namespace BaghChalAI
         public GameBoard GameBoard { get; set; }
         public Pieces Player { get; set; }
         public GameMove Step { get; set; }
-        public static readonly MoveResult[] GoodMoves = { MoveResult.MoveOK, MoveResult.TigerWin, MoveResult.GoatCaptured, MoveResult.GoatWin, MoveResult.Draw};
+        public static readonly MoveResult[] GoodMoves = { MoveResult.MoveOK, MoveResult.TigerWin, MoveResult.GoatCaptured, MoveResult.GoatPlaced, MoveResult.GoatWin, MoveResult.Draw};
 
         public NodeBaseClass(GameBoard gameBoard, Pieces player, GameMove step)
         {
@@ -130,7 +131,8 @@ namespace BaghChalAI
                         {
                             var board = (GameBoard)(tempBoard).Clone();
                             var moveResult = board.Move(Pieces.Goat, piece.Key, move.positions);
-                            result.Add(new NodeBaseClass(board, Pieces.Tiger, new GameMove(Pieces.Tiger, piece.Key, move.positions)));
+                            if(GoodMoves.Contains(moveResult))
+                                result.Add(new NodeBaseClass(board, Pieces.Tiger, new GameMove(Pieces.Goat, piece.Key, move.positions)));
                         }
                     }
                 }
@@ -140,11 +142,7 @@ namespace BaghChalAI
 
         public bool GameIsFinished()
         {
-            if(Player == Pieces.Goat)
-                return GameBoard.CheckGameEnd(Pieces.Tiger);
-            else
-                return GameBoard.CheckGameEnd(Pieces.Goat);
-
+            return GameBoard.CheckGameEnd(Player, false);
         }
     }
 
@@ -160,6 +158,11 @@ namespace BaghChalAI
             Piece = p;
             Start = s;
             End = e;
+        }
+
+        public override string ToString()
+        {
+            return $"S: {Score}, P: {Piece}, S: {Start}, E: {End}.";
         }
     }
 }
