@@ -12,15 +12,23 @@ namespace BaghChalAI
         public static GameMove GetMove(GameBoard board)
         {
             var node = new NodeBaseClass(board, board.CurrentUsersTurn, new GameMove(-1));
-            var res = MiniMax(node, 4, true);
+            //var res = MiniMax(node, 4, true);
+            var res = AlphaBetaPruning(node, 6, true, int.MinValue, int.MaxValue);
             return res;
         }
-
+        /// <summary>
+        /// Simple minimax function.
+        /// Some stats:
+        /// 2 Ply: ~120ms, 250 checks.
+        /// 4 ply: ~3 000ms, 60 000-40 000 checks.
+        /// 5 ply: 374 000ms, 915 000 checks.
+        /// </summary>
         public static GameMove MiniMax(NodeBaseClass node, int depth, bool maximizing)
         {
             if (depth == 0 || node.GameIsFinished())
                 return new GameMove(node.EvaluateNode());
 
+            int checkedNodes = 0;
             if (maximizing)
             {
                 var bestVal = int.MinValue;
@@ -29,13 +37,15 @@ namespace BaghChalAI
                 foreach (var move in childNodes)
                 {
                     var res = MiniMax(move, depth - 1, !maximizing);
-                    if(res.Score > bestVal)
+                    checkedNodes += res.Checks;
+                    if (res.Score > bestVal)
                     {
                         bestVal = res.Score;
                         bestMove = move.Step;
                     }
                 }
                 bestMove.Score = bestVal;
+                bestMove.Checks = checkedNodes + 1;
                 return bestMove;
             }
             else
@@ -45,6 +55,7 @@ namespace BaghChalAI
                 foreach (var move in node.GetChildNodes())
                 {
                     var res = MiniMax(move, depth - 1, !maximizing);
+                    checkedNodes += res.Checks;
                     if (res.Score < bestVal)
                     {
                         bestVal = res.Score;
@@ -52,6 +63,68 @@ namespace BaghChalAI
                     }
                 }
                 bestMove.Score = bestVal;
+                bestMove.Checks = checkedNodes + 1;
+                return bestMove;
+            }
+
+        }
+
+        /// <summary>
+        /// Simple minimax function.
+        /// Some stats:
+        /// 6 Ply: 2 000-10 000ms 12 000 - 55 000 checks.
+        /// </summary>
+        public static GameMove AlphaBetaPruning(NodeBaseClass node, int depth, bool maximizing, int alpha, int beta)
+        {
+            if (depth == 0 || node.GameIsFinished())
+                return new GameMove(node.EvaluateNode());
+
+            int checkedNodes = 0;
+            if (maximizing)
+            {
+                var bestVal = int.MinValue;
+                GameMove bestMove = null;
+                var childNodes = node.GetChildNodes();
+                foreach (var move in childNodes)
+                {
+                    var res = AlphaBetaPruning(move, depth - 1, !maximizing, alpha, beta);
+                    checkedNodes += res.Checks;
+                    if (res.Score > bestVal)
+                    {
+                        bestVal = res.Score;
+                        bestMove = move.Step;
+                    }
+                    alpha = (bestVal > alpha) ? bestVal : alpha;
+                    if (beta <= alpha)
+                    {
+                        break;
+                    }
+                }
+                bestMove.Score = bestVal;
+                bestMove.Checks = checkedNodes + 1;
+                return bestMove;
+            }
+            else
+            {
+                var bestVal = int.MaxValue;
+                GameMove bestMove = new GameMove(-1);
+                foreach (var move in node.GetChildNodes())
+                {
+                    var res = AlphaBetaPruning(move, depth - 1, !maximizing, alpha, beta);
+                    checkedNodes += res.Checks;
+                    if (res.Score < bestVal)
+                    {
+                        bestVal = res.Score;
+                        bestMove = move.Step;
+                    }
+                    beta = (bestVal < beta) ? bestVal : beta;
+                    if (beta <= alpha)
+                    {
+                        break;
+                    }
+                }
+                bestMove.Score = bestVal;
+                bestMove.Checks = checkedNodes + 1;
                 return bestMove;
             }
 
@@ -152,6 +225,7 @@ namespace BaghChalAI
         public (int x, int y) Start { get; set; }
         public (int x, int y) End { get; set; }
         public int Score { get; set; }
+        public int Checks { get; set; } = 1;
         public GameMove(int score) { Score = score; }
         public GameMove(Pieces p, (int x, int y) s, (int x, int y) e)
         {
@@ -162,7 +236,7 @@ namespace BaghChalAI
 
         public override string ToString()
         {
-            return $"S: {Score}, P: {Piece}, S: {Start}, E: {End}.";
+            return $"S: {Score}, C: {Checks}, P: {Piece}, S: {Start}, E: {End}.";
         }
     }
 }

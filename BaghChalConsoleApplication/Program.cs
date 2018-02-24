@@ -12,7 +12,7 @@ namespace BaghChalConsoleApplication
         static void Main(string[] args)
         {
             var board = new GameBoard();
-
+            var sw = new System.Diagnostics.Stopwatch();
             while(true)
             {
                 
@@ -27,9 +27,11 @@ namespace BaghChalConsoleApplication
                 }
                 Console.WriteLine(board.ToString());
 
+                sw.Restart();
                 var move = BaghChalAI.MinMax.GetMove(board);
+                sw.Stop();
                 var aiRes = board.Move(move.Piece, move.Start, move.End);
-                Console.WriteLine(aiRes + " " + move.ToString());
+                Console.WriteLine($"MoveResult: {aiRes}, Time (ms): {sw.ElapsedMilliseconds}, " + move.ToString());
                 Console.WriteLine(board.ToString());
             }
 
