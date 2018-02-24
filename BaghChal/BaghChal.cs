@@ -6,20 +6,6 @@ using System.Threading.Tasks;
 
 namespace BaghChal
 {
-    public class BaghChalPiece
-    {
-
-    }
-
-    public class Tiger : BaghChalPiece
-    {
-
-    }
-
-    public class Goat : BaghChalPiece
-    {
-
-    }
 
     public enum Pieces : int
     {
@@ -57,6 +43,24 @@ namespace BaghChal
         public object Clone()
         {
             return new GameBoard(Board, CurrentUsersTurn, Ply, GoatsLeftToPlace, GoatsCaptured);
+        }
+
+        public override bool Equals(object obj)
+        {
+            // Check for null values and compare run-time types. For now allow child types.
+            if (obj == null || !(obj is GameBoard))
+                return false;
+
+            var p = (GameBoard)obj;
+            return (Board[0] == p.Board[0]) && (Board[1] == p.Board[1])
+                && (GoatsCaptured == p.GoatsCaptured) && GoatsLeftToPlace == p.GoatsLeftToPlace
+                && (Ply == p.Ply);
+        }
+
+        public override int GetHashCode()
+        {
+            // TODO: Not sure if this is a good hash function.
+            return Board[0].GetHashCode() ^ Board[1].GetHashCode();
         }
 
         /// <summary>

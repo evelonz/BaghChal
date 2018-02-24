@@ -9,8 +9,11 @@ namespace BaghChalAI
 {
     public class MinMax
     {
+        public static Dictionary<GameBoard, int> LookupTable { get; set; } = new Dictionary<GameBoard, int>();
+
         public static GameMove GetMove(GameBoard board)
         {
+            LookupTable = new Dictionary<GameBoard, int>();
             var node = new NodeBaseClass(board, board.CurrentUsersTurn, new GameMove(-1));
             //var res = MiniMax(node, 4, true);
             var res = AlphaBetaPruning(node, 6, true, int.MinValue, int.MaxValue);
@@ -25,10 +28,21 @@ namespace BaghChalAI
         /// </summary>
         public static GameMove MiniMax(NodeBaseClass node, int depth, bool maximizing)
         {
+            if(LookupTable.ContainsKey(node.GameBoard))
+            {
+                var move = new GameMove(LookupTable[node.GameBoard]);
+                move.HashHits = 1;
+                return move;
+            }
             if (depth == 0 || node.GameIsFinished())
-                return new GameMove(node.EvaluateNode());
+            {
+                var score = node.EvaluateNode();
+                LookupTable.Add(node.GameBoard, score);
+                return new GameMove(score);
+            }
 
             int checkedNodes = 0;
+            int cacheHits = 0;
             if (maximizing)
             {
                 var bestVal = int.MinValue;
@@ -38,6 +52,7 @@ namespace BaghChalAI
                 {
                     var res = MiniMax(move, depth - 1, !maximizing);
                     checkedNodes += res.Checks;
+                    cacheHits += res.HashHits;
                     if (res.Score > bestVal)
                     {
                         bestVal = res.Score;
@@ -46,6 +61,8 @@ namespace BaghChalAI
                 }
                 bestMove.Score = bestVal;
                 bestMove.Checks = checkedNodes + 1;
+                bestMove.HashHits = cacheHits;
+                LookupTable.Add(node.GameBoard, bestVal);
                 return bestMove;
             }
             else
@@ -56,6 +73,7 @@ namespace BaghChalAI
                 {
                     var res = MiniMax(move, depth - 1, !maximizing);
                     checkedNodes += res.Checks;
+                    cacheHits += res.HashHits;
                     if (res.Score < bestVal)
                     {
                         bestVal = res.Score;
@@ -64,6 +82,8 @@ namespace BaghChalAI
                 }
                 bestMove.Score = bestVal;
                 bestMove.Checks = checkedNodes + 1;
+                bestMove.HashHits = cacheHits;
+                LookupTable.Add(node.GameBoard, bestVal);
                 return bestMove;
             }
 
@@ -76,10 +96,21 @@ namespace BaghChalAI
         /// </summary>
         public static GameMove AlphaBetaPruning(NodeBaseClass node, int depth, bool maximizing, int alpha, int beta)
         {
+            if (LookupTable.ContainsKey(node.GameBoard))
+            {
+                var move = new GameMove(LookupTable[node.GameBoard]);
+                move.HashHits = 1;
+                return move;
+            }
             if (depth == 0 || node.GameIsFinished())
-                return new GameMove(node.EvaluateNode());
+            {
+                var score = node.EvaluateNode();
+                LookupTable.Add(node.GameBoard, score);
+                return new GameMove(score);
+            }
 
             int checkedNodes = 0;
+            int cacheHits = 0;
             if (maximizing)
             {
                 var bestVal = int.MinValue;
@@ -89,6 +120,7 @@ namespace BaghChalAI
                 {
                     var res = AlphaBetaPruning(move, depth - 1, !maximizing, alpha, beta);
                     checkedNodes += res.Checks;
+                    cacheHits += res.HashHits;
                     if (res.Score > bestVal)
                     {
                         bestVal = res.Score;
@@ -102,6 +134,8 @@ namespace BaghChalAI
                 }
                 bestMove.Score = bestVal;
                 bestMove.Checks = checkedNodes + 1;
+                bestMove.HashHits = cacheHits;
+                LookupTable.Add(node.GameBoard, bestVal);
                 return bestMove;
             }
             else
@@ -112,6 +146,7 @@ namespace BaghChalAI
                 {
                     var res = AlphaBetaPruning(move, depth - 1, !maximizing, alpha, beta);
                     checkedNodes += res.Checks;
+                    cacheHits += res.HashHits;
                     if (res.Score < bestVal)
                     {
                         bestVal = res.Score;
@@ -125,6 +160,8 @@ namespace BaghChalAI
                 }
                 bestMove.Score = bestVal;
                 bestMove.Checks = checkedNodes + 1;
+                bestMove.HashHits = cacheHits;
+                LookupTable.Add(node.GameBoard, bestVal);
                 return bestMove;
             }
 
@@ -226,6 +263,7 @@ namespace BaghChalAI
         public (int x, int y) End { get; set; }
         public int Score { get; set; }
         public int Checks { get; set; } = 1;
+        public int HashHits { get; set; } = 0;
         public GameMove(int score) { Score = score; }
         public GameMove(Pieces p, (int x, int y) s, (int x, int y) e)
         {
@@ -236,7 +274,7 @@ namespace BaghChalAI
 
         public override string ToString()
         {
-            return $"S: {Score}, C: {Checks}, P: {Piece}, S: {Start}, E: {End}.";
+            return $"S: {Score}, C: {Checks}, H: {HashHits}, P: {Piece}, S: {Start}, E: {End}.";
         }
     }
 }
