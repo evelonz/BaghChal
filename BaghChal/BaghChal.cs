@@ -234,17 +234,37 @@ namespace BaghChal
             if(GoatsLeftToPlace != 0)
             {
                 List<(MoveResult result, (int x, int y) posistion)> returnValue = new List<(MoveResult result, (int x, int y) posistion)>();
-                for (int i = 8; i < 41; i++)
+                for (int row = 1; row < 6; row++)
                 {
-                    var piece = GetPieceAtIndex(i);
-                    if (piece == Pieces.Empty)
-                        returnValue.Add((MoveResult.MoveOK, TranslatetFromBoardIndex(i)));
+                    for (int column = 1; column < 6; column++)
+                    {
+                        var boardIndex = TranslateToBoardIndex((column, row));
+                        var piece = GetPieceAtIndex(boardIndex);
+                        if (piece == Pieces.Empty)
+                            returnValue.Add((MoveResult.MoveOK, (column, row)));
+                    }
                 }
                 res.Add((0, 0), returnValue);
             }
             else
             {
-                // TODO: Implement goat moves.
+                for (int i = 8; i < 41; i++)
+                {
+                    if ((Board[(int)Pieces.Goat] & (1L << i)) > 0)
+                    {
+                        List<(MoveResult result, (int x, int y) posistion)> returnValue = new List<(MoveResult result, (int x, int y) posistion)>();
+                        var goatPosition = TranslatetFromBoardIndex(i);
+                        var linkedPositions = GetLinkedPositions(i);
+                        for (int target = 0; target < linkedPositions.Length; target++)
+                        {
+                            var targetPosition = TranslatetFromBoardIndex(linkedPositions[target]);
+                            var moveResult = TryMove(Pieces.Goat, goatPosition, targetPosition);
+                            // TODO: Only store move result if successful? And only store to dictionary if any result?
+                            returnValue.Add((moveResult, targetPosition));
+                        }
+                        res.Add(goatPosition, returnValue);
+                    }
+                }
             }
             return res;
         }
