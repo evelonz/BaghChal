@@ -296,27 +296,38 @@ namespace BaghChal
                 start + 12, start + 14, start + 16,
             };
         }
-
+        
         public MoveResult Move(Pieces piece, (int x, int y) start, (int x, int y) end)
         {
             var move = TryMove(piece, start, end);
+            return MoveDanger(piece, start, end, move);
+
+        }
+
+        /// <summary>
+        /// This move function skips the TryMove check. Used to speed up the AI. Use with care.
+        /// </summary>
+        public MoveResult MoveDanger(Pieces piece, (int x, int y) start, (int x, int y) end, MoveResult move)
+        {
             var endIndex = TranslateToBoardIndex(end);
             var startIndex = TranslateToBoardIndex(start);
-            switch(move)
+            switch (move)
             {
                 case MoveResult.GoatPlaced:
                     PerformGameMove(piece, -1, endIndex);
-                    return (CheckGameEnd(piece)) ? MoveResult.GoatWin : move;
+                    return //(CheckGameEnd(piece)) ? MoveResult.GoatWin : 
+                    move;
                 case MoveResult.GoatCaptured:
                     IsJumpValid(piece, startIndex, endIndex, out int captureIndex);
                     PerformGameMove(piece, startIndex, endIndex, captureIndex);
-                    return (CheckGameEnd(piece)) ? MoveResult.TigerWin : move;
+                    return //(CheckGameEnd(piece)) ? MoveResult.TigerWin : 
+                    move;
                 case MoveResult.MoveOK:
                     PerformGameMove(piece, startIndex, endIndex);
-                    return (CheckGameEnd(piece)) ? MoveResult.GoatWin : move;
+                    return //(CheckGameEnd(piece)) ? MoveResult.GoatWin : 
+                    move;
             }
             return move;
-            
         }
 
         public MoveResult TryMove(Pieces piece, (int x, int y) start, (int x, int y) end)
