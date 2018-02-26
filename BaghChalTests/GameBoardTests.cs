@@ -58,11 +58,11 @@ namespace BaghChal.Tests
             //GGG--
             //TT---
             //-----
-            var board = new GameBoard(8, 16, 0, Pieces.Goat, 
+            var board = new GameBoard(8, 16, 0, Pieces.Goat,
                 (Pieces.Tiger, (1, 1)), (Pieces.Tiger, (2, 2)), (Pieces.Tiger, (1, 4)), (Pieces.Tiger, (2, 4)),
                 (Pieces.Goat, (1, 2)), (Pieces.Goat, (1, 3)), (Pieces.Goat, (2, 3)), (Pieces.Goat, (3, 3))
                 );
-            
+
             // Out of turn move.
             var result = board.Move(Pieces.Tiger, (1, 1), (2, 1));
             Assert.AreEqual(MoveResult.NotPlayersTurn, result, "Tiger able to move out of turn.");
@@ -182,7 +182,7 @@ namespace BaghChal.Tests
                 );
             result = board.Move(Pieces.Goat, (5, 2), (4, 2));
             Assert.AreEqual(MoveResult.GoatWin, result, "Goat unable to win.");
-            
+
             // Test if Tiger finds jump to escape.
             board = new GameBoard(46, 0, 4, Pieces.Goat,
                 (Pieces.Tiger, (1, 1)), (Pieces.Tiger, (1, 2)), (Pieces.Tiger, (2, 1)), (Pieces.Tiger, (2, 2)),
@@ -192,10 +192,65 @@ namespace BaghChal.Tests
                 );
             result = board.Move(Pieces.Goat, (5, 2), (5, 3));
             Assert.AreEqual(MoveResult.MoveOK, result, "Tiger unable to escape loss using jump.");
-            
+
 
             // Test if board position has occured before.
             // Test undo move.
+        }
+
+        [TestMethod()]
+        public void GetGoatMovesTest()
+        {
+            // Check goat placement.
+            var board = new GameBoard(20, 10, 0, Pieces.Goat,
+                (Pieces.Tiger, (1, 1)), (Pieces.Tiger, (1, 2)), (Pieces.Tiger, (2, 1)), (Pieces.Tiger, (2, 2)),
+                (Pieces.Goat, (3, 1)), (Pieces.Goat, (4, 1)), (Pieces.Goat, (3, 2)), (Pieces.Goat, (5, 2)),
+                (Pieces.Goat, (1, 3)), (Pieces.Goat, (2, 3)), (Pieces.Goat, (1, 4)), (Pieces.Goat, (2, 4)),
+                (Pieces.Goat, (3, 3)), (Pieces.Goat, (4, 4))
+                );
+            var moves = board.GetGoatMoves();
+
+            var moveResults = new List<(MoveResult result, (int x, int y) positions)>()
+            {
+                (MoveResult.MoveOK, (5, 1)),
+                (MoveResult.MoveOK, (4, 2)),
+                (MoveResult.MoveOK, (4, 3)),(MoveResult.MoveOK, (5, 3)),
+                (MoveResult.MoveOK, (3, 4)),(MoveResult.MoveOK, (5, 4)),
+                (MoveResult.MoveOK, (1, 5)),(MoveResult.MoveOK, (2, 5)),(MoveResult.MoveOK, (3, 5)),(MoveResult.MoveOK, (4, 5)),(MoveResult.MoveOK, (5, 5))
+            };
+            var res = Enumerable.SequenceEqual(moves[(0, 0)].OrderBy(t => t.positions), moveResults.OrderBy(t => t.positions));
+            Assert.AreEqual(true, res, "Goat placement incorrect.");
+
+            // Check single goat move.
+            board = new GameBoard(20, 0, 4, Pieces.Goat,
+                (Pieces.Goat, (3, 3))
+                );
+            moves = board.GetGoatMoves();
+
+            moveResults = new List<(MoveResult result, (int x, int y) positions)>()
+            {
+                (MoveResult.MoveOK, (2, 2)),(MoveResult.MoveOK, (3, 2)),(MoveResult.MoveOK, (4, 2)),
+                (MoveResult.MoveOK, (2, 3)),                            (MoveResult.MoveOK, (4, 3)),
+                (MoveResult.MoveOK, (2, 4)),(MoveResult.MoveOK, (3, 4)),(MoveResult.MoveOK, (4, 4)),
+            };
+            res= Enumerable.SequenceEqual(moves[(3, 3)].OrderBy(t => t.positions), moveResults.OrderBy(t => t.positions));
+            Assert.AreEqual(true, res, "Goat moves incorrect from center.");
+
+            // Check goat next to border, tigers, and other goats.
+            board = new GameBoard(40, 0, 0, Pieces.Goat,
+                (Pieces.Tiger, (2, 1)), (Pieces.Goat, (3, 1)), (Pieces.Goat, (4, 1))
+            );
+            moves = board.GetGoatMoves();
+
+            moveResults = new List<(MoveResult result, (int x, int y) positions)>()
+            {
+                (MoveResult.OutOfBounds, (2, 0)),            (MoveResult.OutOfBounds, (3, 0)), (MoveResult.OutOfBounds, (4, 0)),
+                (MoveResult.TargetLocationOccupied, (2, 1)),                                   (MoveResult.TargetLocationOccupied, (4, 1)),
+                (MoveResult.MoveOK, (2, 2)),                 (MoveResult.MoveOK, (3, 2)),      (MoveResult.MoveOK, (4, 2)),
+            };
+            res = Enumerable.SequenceEqual(moves[(3, 1)].OrderBy(t => t.positions), moveResults.OrderBy(t => t.positions));
+            Assert.AreEqual(true, res, "Goat able to move to incorrect location.");
+
         }
     }
 }
