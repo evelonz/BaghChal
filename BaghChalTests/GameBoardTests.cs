@@ -165,8 +165,9 @@ namespace BaghChal.Tests
             result = board.Move(Pieces.Goat, (1, 3), (2, 3));
             Assert.AreEqual(MoveResult.MoveOK, result, "Goat unable to move one space.");
             result = board.Move(Pieces.Tiger, (2, 4), (2, 2));
-            Assert.AreEqual(MoveResult.TigerWin, result, "Tiger unable to win.");
-
+            Assert.AreEqual(MoveResult.GoatCaptured, result, "Tiger unable to make winning move.");
+            var GameEnd = board.CheckGameEnd(Pieces.Tiger);
+            Assert.AreEqual(true, GameEnd, "Tiger unable to win.");
             // Set board up for goat win.
             //TTGG- 
             //TTG-G
@@ -181,7 +182,9 @@ namespace BaghChal.Tests
                 (Pieces.Goat, (3, 3)), (Pieces.Goat, (4, 4))
                 );
             result = board.Move(Pieces.Goat, (5, 2), (4, 2));
-            Assert.AreEqual(MoveResult.GoatWin, result, "Goat unable to win.");
+            Assert.AreEqual(MoveResult.MoveOK, result, "Goat unable to make winning move.");
+            GameEnd = board.CheckGameEnd(Pieces.Goat);
+            Assert.AreEqual(true, GameEnd, "Goat unable to win.");
 
             // Test if Tiger finds jump to escape.
             board = new GameBoard(46, 0, 4, Pieces.Goat,

@@ -175,7 +175,7 @@ namespace BaghChalAI
         public GameBoard GameBoard { get; set; }
         public Pieces Player { get; set; }
         public GameMove Step { get; set; }
-        public static readonly MoveResult[] GoodMoves = { MoveResult.MoveOK, MoveResult.TigerWin, MoveResult.GoatCaptured, MoveResult.GoatPlaced, MoveResult.GoatWin, MoveResult.Draw};
+        public static readonly MoveResult[] GoodMoves = { MoveResult.MoveOK, MoveResult.TigerWin, MoveResult.GoatCaptured, MoveResult.GoatPlaced, MoveResult.GoatWin, MoveResult.Draw };
 
         public NodeBaseClass(GameBoard gameBoard, Pieces player, GameMove step)
         {
@@ -195,17 +195,16 @@ namespace BaghChalAI
             {
                 if (GameBoard.CheckGameEnd(Pieces.Goat)) { return int.MaxValue; }
             }
-                
+
 
             // Count score for Tiger, then revert for goat.
             int sum = GameBoard.GoatsCaptured * 1000;
             // Adding play to return to try and play longer.
             return (Player == Pieces.Tiger) ? sum : -sum + GameBoard.Ply;
         }
-
+        
         public List<NodeBaseClass> GetChildNodes()
         {
-            var goodMove = new List<MoveResult>() { MoveResult.MoveOK, MoveResult.TigerWin, MoveResult.GoatCaptured, MoveResult.GoatWin, MoveResult.Draw };
             var tempBoard = (GameBoard)GameBoard.Clone();
             var result = new List<NodeBaseClass>();
             // Start just playing the tiger and goat placements.
@@ -217,7 +216,7 @@ namespace BaghChalAI
                     foreach (var move in piece.Value.Where(x => GoodMoves.Contains(x.result)))
                     {
                         var board = (GameBoard)(tempBoard).Clone();
-                        var moveResult = board.Move(Pieces.Tiger, piece.Key, move.positions);
+                        var moveResult = board.MoveDanger(Pieces.Tiger, piece.Key, move.positions, move.result);
                         result.Add(new NodeBaseClass(board, Pieces.Goat, new GameMove(Pieces.Tiger, piece.Key, move.positions)));
                     }
                 }
@@ -240,9 +239,8 @@ namespace BaghChalAI
                         foreach (var move in piece.Value.Where(x => GoodMoves.Contains(x.result)))
                         {
                             var board = (GameBoard)(tempBoard).Clone();
-                            var moveResult = board.Move(Pieces.Goat, piece.Key, move.positions);
-                            if(GoodMoves.Contains(moveResult))
-                                result.Add(new NodeBaseClass(board, Pieces.Tiger, new GameMove(Pieces.Goat, piece.Key, move.positions)));
+                            var moveResult = board.MoveDanger(Pieces.Goat, piece.Key, move.positions, move.result);
+                            result.Add(new NodeBaseClass(board, Pieces.Tiger, new GameMove(Pieces.Goat, piece.Key, move.positions)));
                         }
                     }
                 }
@@ -274,7 +272,7 @@ namespace BaghChalAI
 
         public override string ToString()
         {
-            return $"S: {Score}, C: {Checks}, H: {HashHits}, P: {Piece}, S: {Start}, E: {End}.";
+            return $"S: {Score}, C: {Checks}, H: {HashHits}, P: {Piece}, S: {Start}, E: {End}";
         }
     }
 }

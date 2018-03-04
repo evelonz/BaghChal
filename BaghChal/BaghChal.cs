@@ -59,7 +59,7 @@ namespace BaghChal
 
         public override int GetHashCode()
         {
-            // TODO: Not sure if this is a good hash function.
+            // TODO: Not sure if this is a good hash function. Issue added to make it handle transposed positions.
             return Board[0].GetHashCode() ^ Board[1].GetHashCode();
         }
 
@@ -101,7 +101,7 @@ namespace BaghChal
 
             foreach (var (pieceType, position) in args)
             {
-                var index = GameMove.TranslateToBoardIndex(position);
+                var index = GameBoard.TranslateToBoardIndex(position);
                 PlacePeiceAtIndex(pieceType, index);
             }
         }
@@ -198,12 +198,12 @@ namespace BaghChal
 
         public Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) positions)>> GetTigerMoves()
         {
-            Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) positions)>> res = new Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) posistion)>>(4);
+            var res = new Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) posistion)>>(4);
             for (int i = 8; i < 41; i++)
             {
                 if ((Board[(int)Pieces.Tiger] & (1L << i)) > 0)
                 {
-                    List<(MoveResult result, (int x, int y) posistion)> returnValue = new List<(MoveResult result, (int x, int y) posistion)>();
+                    var returnValue = new List<(MoveResult result, (int x, int y) posistion)>(16);
                     var tigerPosition = TranslatetFromBoardIndex(i);
                     var linkedPositions = GetLinkedPositions(i);
                     for (int target = 0; target < linkedPositions.Length; target++)
@@ -212,11 +212,12 @@ namespace BaghChal
                         var moveResult = TryMove(Pieces.Tiger, tigerPosition, targetPosition);
                         returnValue.Add((moveResult, targetPosition));
                     }
-                    // TODO: Now have to check if there are any jump points. Wonder if a filter on goats is faster than just checking all jumps?
+                    // TODO: Now checks if there are any jump points. Might be faster to filter on adjacent goats first?
                     linkedPositions = GetJumpLinkedPositions(i);
                     for (int target = 0; target < linkedPositions.Length; target++)
                     {
                         var endIndex = linkedPositions[target];
+                        // TODO: This check is not complete. Create a index OutOfBounds check function and use it instead.
                         if (endIndex < 0 || endIndex > 48) continue; // Code to skip out of bounds for jumps.
                         var targetPosition = TranslatetFromBoardIndex(endIndex);
                         var moveResult = TryMove(Pieces.Tiger, tigerPosition, targetPosition);
@@ -269,16 +270,8 @@ namespace BaghChal
             return res;
         }
 
-
-        public bool GetAllMoves(Pieces piece, (int, int) position)
-        {
-            // TODO: Implement.
-            return false;
-        }
-
         private int[] GetLinkedPositions(int start)
         {
-            // TODO: Include jump links here all at ones?
             return new int[] {
                 start - 8, start - 7, start - 6,
                 start - 1,            start + 1,
@@ -296,27 +289,38 @@ namespace BaghChal
                 start + 12, start + 14, start + 16,
             };
         }
-
+        
         public MoveResult Move(Pieces piece, (int x, int y) start, (int x, int y) end)
         {
             var move = TryMove(piece, start, end);
+            return MoveDanger(piece, start, end, move);
+
+        }
+
+        /// <summary>
+        /// This move function skips the TryMove check. Used to speed up the AI. Use with care.
+        /// </summary>
+        public MoveResult MoveDanger(Pieces piece, (int x, int y) start, (int x, int y) end, MoveResult move)
+        {
             var endIndex = TranslateToBoardIndex(end);
             var startIndex = TranslateToBoardIndex(start);
-            switch(move)
+            switch (move)
             {
                 case MoveResult.GoatPlaced:
                     PerformGameMove(piece, -1, endIndex);
-                    return (CheckGameEnd(piece)) ? MoveResult.GoatWin : move;
+                    return //(CheckGameEnd(piece)) ? MoveResult.GoatWin : 
+                    move;
                 case MoveResult.GoatCaptured:
                     IsJumpValid(piece, startIndex, endIndex, out int captureIndex);
                     PerformGameMove(piece, startIndex, endIndex, captureIndex);
-                    return (CheckGameEnd(piece)) ? MoveResult.TigerWin : move;
+                    return //(CheckGameEnd(piece)) ? MoveResult.TigerWin : 
+                    move;
                 case MoveResult.MoveOK:
                     PerformGameMove(piece, startIndex, endIndex);
-                    return (CheckGameEnd(piece)) ? MoveResult.GoatWin : move;
+                    return //(CheckGameEnd(piece)) ? MoveResult.GoatWin : 
+                    move;
             }
             return move;
-            
         }
 
         public MoveResult TryMove(Pieces piece, (int x, int y) start, (int x, int y) end)
@@ -325,16 +329,16 @@ namespace BaghChal
             if (piece != CurrentUsersTurn)
                 return MoveResult.NotPlayersTurn;
             // If 0,0 is used as start position during goat placement, then check this early before errors on start position is found.
+            if (IsOutOfBounds(end))
+                return MoveResult.OutOfBounds;
             var endIndex = TranslateToBoardIndex(end);
             if (piece == Pieces.Goat && start.Equals((0, 0)))
             {
-                if (IsOutOfBounds(end))
-                    return MoveResult.OutOfBounds;
                 if (IsPieceAtIndex(Pieces.Any, endIndex))
                     return MoveResult.TargetLocationOccupied;
                 return MoveResult.GoatPlaced;
             }
-            if (IsOutOfBounds(start) || IsOutOfBounds(end))
+            if (IsOutOfBounds(start))
                 return MoveResult.OutOfBounds;
             var startIndex = TranslateToBoardIndex(start);
             if (piece != GetPieceAtIndex(startIndex))
@@ -420,7 +424,6 @@ namespace BaghChal
 
         private void PerformGameMove(Pieces piece, int startIndex, int endIndex, int captureIndex = -1)
         {
-            // TODO: Fix this code! 3 moves: Place, move, and capture. Capture also use move.
             if (captureIndex != -1)
             {
                 var helper = this.Board;
@@ -461,14 +464,14 @@ namespace BaghChal
             Tick();
             return;
         }
-        
+
         /// <summary>
         /// Translate a 1 indexed x, y coordinate into a index position on the 
         /// internal board storage.
         /// </summary>
-        private static int TranslateToBoardIndex((int x, int y) position)
+        public static int TranslateToBoardIndex((int x, int y) position)
         {
-            // TODO: Should perhaps check fo overflow, in case the IsOutOfBounds check uses index instead of position.
+            // TODO: Should rewrite the entire internal code to only work with indexes. Tried a dictionary and it was slower!
             return position.x + (position.y * 7);
         }
 
@@ -485,7 +488,6 @@ namespace BaghChal
 
         private bool IsOutOfBounds((int x, int y) position)
         {
-            // TODO: Is it better to check using index instead?
             return position.x < 1 || position.y < 1 ||
                 position.x > 5 || position.y > 5;
         }
@@ -517,66 +519,4 @@ namespace BaghChal
         OutOfReach = 3,
     }
 
-    public enum InvalidGameMove : int
-    {
-        OutOfBounds = 1,
-        TryToMoveIncorrectPiece = 2,
-        TargetLocationOccupied = 3,
-    }
-
-    public class GameMoveException : Exception
-    {
-        public InvalidGameMove TypeOfViolation { get; set; }
-
-        public GameMoveException(string message, InvalidGameMove type) : base(message)
-        {
-            TypeOfViolation = type;
-        }
-    }
-
-    public class GameMove
-    {
-
-        public bool TryMove(Pieces piece, (int x, int y) startPosition, (int x, int y) endPosition, GameBoard board)
-        {
-            if(IsOutOfBounds(startPosition) || IsOutOfBounds(endPosition))
-            {
-                throw new GameMoveException("Start or end position is out of bounds.", InvalidGameMove.OutOfBounds);
-            }
-            else if (IsPieceAtLocation(piece, startPosition, board))
-            {
-                throw new GameMoveException("Selected piece is not at start position.", InvalidGameMove.TryToMoveIncorrectPiece);
-            }
-            else if (IslocationEmpty(endPosition, board))
-            {
-                throw new GameMoveException("Target location is not empty.", InvalidGameMove.TargetLocationOccupied);
-            }
-            else
-                return false;
-        }
-
-        private bool IsPieceAtLocation(Pieces piece, (int x, int y) position, GameBoard board)
-        {
-            return board.IsPieceAtIndex(piece, TranslateToBoardIndex(position));
-        }
-
-        private bool IslocationEmpty((int x, int y) position, GameBoard board)
-        {
-            return !IsPieceAtLocation(Pieces.Any, position, board);
-        }
-
-        public bool IsOutOfBounds((int x, int y) position)
-        {
-            return position.x < 0 || position.y < 0; // TODO: Implement logic.
-        }
-
-        /// <summary>
-        /// Translate a <see cref="BoardPosition"/> into a index position on 
-        /// the internal board storage.
-        /// </summary>
-        public static int TranslateToBoardIndex((int x, int y) position)
-        {
-            return position.x + (position.y * 7);
-        }
-    }
 }
