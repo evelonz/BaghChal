@@ -13,6 +13,8 @@ namespace BaghChalConsoleApplication
         {
             var board = new GameBoard();
             var sw = new System.Diagnostics.Stopwatch();
+            var sw2 = new System.Diagnostics.Stopwatch();
+            sw2.Start();
             int numberOfTestTurns = 20;
             while(numberOfTestTurns-- > 0)
             {
@@ -20,7 +22,9 @@ namespace BaghChalConsoleApplication
                 AIMove(board, sw);
                 AIMove(board, sw);
             }
-
+            sw2.Stop();
+            Console.WriteLine(sw2.ElapsedMilliseconds);
+            Console.ReadKey();
             //board.PlacePeiceAtIndex(Pieces.Tiger, 8);
             //board.PlacePeiceAtIndex(Pieces.Tiger, 12);
             //board.PlacePeiceAtIndex(Pieces.Tiger, 36);
