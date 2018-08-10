@@ -194,18 +194,29 @@ namespace BaghChal
             };
         }
 
+        /// <summary>
+        /// Check if two positions on the board are linked, either directly or by a jump.
+        /// Calls to this function assumes that the positions given have already been checked so that they
+        /// are within bounds.
+        /// </summary>
+        /// <param name="start">The start position to check from.</param>
+        /// <param name="end">The end position to check connection to.</param>
+        /// <returns>
+        /// The type of connection, positive ones are <see cref="MoveType.Linked"/> and
+        /// <see cref="MoveType.Jump"/> while no connection is <see cref="MoveType.OutOfReach"/>.
+        /// </returns>
         public static MoveType PositionsAreLinked(int start, int end)
         {
-            // Skipping check of Out of bounds here. Assume it's done.
-            // Are positions up, down, left, and right are connected.
-            // Assume positive indexes here.
+            // Positions up, down, left, and right are connected.
             var dx = Math.Abs(start - end);
             if (dx == 1 || dx == 7)
                 return MoveType.Linked;
-            // A jump is simply a move of two steps. Though only tigers can do it and there must be a goat between.
-            // Though this code only checks if it's a possible move from a board perspective.
+
+            // A jump is simply a move of two steps. Though only tigers can do it and there must be a goat 
+            // between. This code only checks that the move is possible from a boards perspective.
             else if (dx == 2 || dx == 14)
                 return MoveType.Jump;
+
             // There are also diagonal lines going going from even coordinates (-2, 0, 2, 4) down right
             // and the same down left (2, 4, 6, 8)
             // First are multiples of 8. Second case are multiples of 6.
@@ -223,7 +234,7 @@ namespace BaghChal
         }
 
         /// <summary>
-        /// Check that a jump move is valued.
+        /// Check that a jump move is valid.
         /// Can only be done by a tiger.
         /// Must be done over a goat, into a empty space.
         /// </summary>
@@ -269,6 +280,11 @@ namespace BaghChal
             return (x, y);
         }
 
+        /// <summary>
+        /// Check that a position is not out of bounds on the board.
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
         private bool IsOutOfBounds((int x, int y) position)
         {
             return position.x < 1 || position.y < 1 ||
@@ -279,14 +295,24 @@ namespace BaghChal
 
         #region Game logic
 
+        /// <summary>
+        /// Progress the game forward one ply.
+        /// </summary>
         private void Tick()
         {
             CurrentUsersTurn = (CurrentUsersTurn == Pieces.Goat) ? Pieces.Tiger : Pieces.Goat;
             Ply++;
         }
 
+        /// <summary>
+        /// Check if any of the game ending conditions are met.
+        /// </summary>
+        /// <param name="piece">The piece from whoms position the checks should be made.</param>
+        /// <param name="checkAfterMove">If true, check if won. Else check if lost.</param>
+        /// <returns></returns>
         public bool CheckGameEnd(Pieces piece, bool checkAfterMove = true)
         {
+            // TODO: Refactor this function. The logic/namings are kind of confusing.
             switch (piece)
             {
                 case Pieces.Tiger:
@@ -302,6 +328,11 @@ namespace BaghChal
             }
         }
 
+        /// <summary>
+        /// Check that any tiger on the board is able to move.
+        /// If no tiger can move, then tigers have lost.
+        /// </summary>
+        /// <returns></returns>
         private bool TigerAbleToMove()
         {
             var tigerMoves = GetTigerMoves();
@@ -314,6 +345,12 @@ namespace BaghChal
             return false;
         }
 
+        /// <summary>
+        /// Get all posible moves for the tigers on the board.
+        /// </summary>
+        /// <returns>
+        /// A dictionary with coordinates of the tigers, together with a list of each tigers possible moves.
+        /// </returns>
         public Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) positions)>> GetTigerMoves()
         {
             var res = new Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) posistion)>>(4);
@@ -347,6 +384,14 @@ namespace BaghChal
             return res;
         }
 
+        /// <summary>
+        /// Get all possible moves for the goats.
+        /// During placement phase, all posssible moves are added to a (0, 0) key. 
+        /// </summary>
+        /// <returns>
+        /// A dictionary with coordinates of the goats, together with a list of each goats possible moves.
+        /// During placement phase, all possible placements are added to a (0, 0) key.
+        /// </returns>
         public Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) positions)>> GetGoatMoves()
         {
             Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) positions)>> res = new Dictionary<(int x, int y), List<(MoveResult result, (int x, int y) posistion)>>();
@@ -388,6 +433,13 @@ namespace BaghChal
             return res;
         }
 
+        /// <summary>
+        /// Performe a move in the game.
+        /// </summary>
+        /// <param name="piece"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
         public MoveResult Move(Pieces piece, (int x, int y) start, (int x, int y) end)
         {
             var move = TryMove(piece, start, end);
@@ -421,6 +473,13 @@ namespace BaghChal
             return move;
         }
 
+        /// <summary>
+        /// Test if a given move is valid.
+        /// </summary>
+        /// <param name="piece"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
         public MoveResult TryMove(Pieces piece, (int x, int y) start, (int x, int y) end)
         {
             // Perhaps split the move validation into static and none static?
@@ -466,6 +525,13 @@ namespace BaghChal
 
         }
 
+        /// <summary>
+        /// Performe a game move and progress the game.
+        /// </summary>
+        /// <param name="piece"></param>
+        /// <param name="startIndex"></param>
+        /// <param name="endIndex"></param>
+        /// <param name="captureIndex"></param>
         private void PerformGameMove(Pieces piece, int startIndex, int endIndex, int captureIndex = -1)
         {
             if (captureIndex != -1)
