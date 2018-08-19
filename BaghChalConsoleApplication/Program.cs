@@ -19,8 +19,8 @@ namespace BaghChalConsoleApplication
             while(numberOfTestTurns-- > 0)
             {
                 //HumanMove(board);
-                AIMove(board, sw);
-                AIMove(board, sw);
+                board = AIMove(board, sw);
+                board = AIMove(board, sw);
             }
             sw2.Stop();
             Console.WriteLine(sw2.ElapsedMilliseconds);
@@ -42,29 +42,40 @@ namespace BaghChalConsoleApplication
             //PrintGameBoard(board, ++i);
         }
 
-        private static void HumanMove(GameBoard board)
+        private static GameBoard HumanMove(GameBoard board)
         {
             Console.WriteLine("Type start coordinate then enter (x,y).");
             var inputStart = Console.ReadLine().Split(',');
             Console.WriteLine("Type end coordinate then enter (x,y).");
             var inputEnd = Console.ReadLine().Split(',');
-            if (int.TryParse(inputStart[0], out int xs) && int.TryParse(inputStart[1], out int ys) &&
-                int.TryParse(inputEnd[0], out int xe) && int.TryParse(inputEnd[1], out int ye))
+
+            while(true)
             {
-                var humanRes = board.Move(board.CurrentUsersTurn, (xs, ys), (xe, ye));
-                Console.WriteLine(humanRes);
+                if (int.TryParse(inputStart[0], out int xs) && int.TryParse(inputStart[1], out int ys) &&
+                int.TryParse(inputEnd[0], out int xe) && int.TryParse(inputEnd[1], out int ye))
+                {
+                    var humanRes = board.Move(board.CurrentUsersTurn, (xs, ys), (xe, ye));
+                    Console.WriteLine(humanRes);
+                    Console.WriteLine(board.ToString());
+                    return humanRes.nextState;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input, state input as int, int for the coordinates.");
+                }
             }
-            Console.WriteLine(board.ToString());
+
         }
 
-        private static void AIMove(GameBoard board, System.Diagnostics.Stopwatch sw)
+        private static GameBoard AIMove(GameBoard board, System.Diagnostics.Stopwatch sw)
         {
             sw.Restart();
             var move = BaghChalAI.MinMax.GetMove(board);
             sw.Stop();
             var aiRes = board.Move(move.Piece, move.Start, move.End);
-            Console.WriteLine($"MoveResult: {aiRes}, Time (ms): {sw.ElapsedMilliseconds}, Checks/ms: {move.Checks/(sw.ElapsedMilliseconds+1)}, {move.ToString()}.");
+            Console.WriteLine($"MoveResult: {aiRes.move}, Time (ms): {sw.ElapsedMilliseconds}, Checks/ms: {move.Checks/(sw.ElapsedMilliseconds+1)}, {move.ToString()}.");
             Console.WriteLine(board.ToString());
+            return aiRes.nextState;
         }
 
         static void PrintGameBoard(GameBoard board, int round)
