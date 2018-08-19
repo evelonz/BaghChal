@@ -205,7 +205,6 @@ namespace BaghChalAI
         
         public List<NodeBaseClass> GetChildNodes()
         {
-            var tempBoard = (GameBoard)GameBoard.Clone();
             var result = new List<NodeBaseClass>();
             // Start just playing the tiger and goat placements.
             if(Player == Pieces.Tiger)
@@ -215,9 +214,8 @@ namespace BaghChalAI
                 {
                     foreach (var move in piece.Value.Where(x => GoodMoves.Contains(x.result)))
                     {
-                        var board = (GameBoard)(tempBoard).Clone();
-                        var moveResult = board.MoveDanger(Pieces.Tiger, piece.Key, move.positions, move.result);
-                        result.Add(new NodeBaseClass(board, Pieces.Goat, new GameMove(Pieces.Tiger, piece.Key, move.positions)));
+                        var moveResult = GameBoard.MoveDanger(Pieces.Tiger, piece.Key, move.positions, move.result);
+                        result.Add(new NodeBaseClass(moveResult.nextState, Pieces.Goat, new GameMove(Pieces.Tiger, piece.Key, move.positions)));
                     }
                 }
             }
@@ -226,9 +224,8 @@ namespace BaghChalAI
                 // Default first move for Gaot. Only one to not lose a goat in the first 10 moves.
                 if (GameBoard.Ply == 0)
                 {
-                    var board = (GameBoard)(tempBoard).Clone();
-                    var moveResult = board.Move(Pieces.Goat, (0, 0), (3, 1));
-                    result.Add(new NodeBaseClass(board, Pieces.Tiger, new GameMove(Pieces.Goat, (0, 0), (3, 1))));
+                    var moveResult = GameBoard.Move(Pieces.Goat, (0, 0), (3, 1));
+                    result.Add(new NodeBaseClass(moveResult.nextState, Pieces.Tiger, new GameMove(Pieces.Goat, (0, 0), (3, 1))));
                 }
                 // Else, play as normal.
                 else
@@ -238,9 +235,8 @@ namespace BaghChalAI
                     {
                         foreach (var move in piece.Value.Where(x => GoodMoves.Contains(x.result)))
                         {
-                            var board = (GameBoard)(tempBoard).Clone();
-                            var moveResult = board.MoveDanger(Pieces.Goat, piece.Key, move.positions, move.result);
-                            result.Add(new NodeBaseClass(board, Pieces.Tiger, new GameMove(Pieces.Goat, piece.Key, move.positions)));
+                            var moveResult = GameBoard.MoveDanger(Pieces.Goat, piece.Key, move.positions, move.result);
+                            result.Add(new NodeBaseClass(moveResult.nextState, Pieces.Tiger, new GameMove(Pieces.Goat, piece.Key, move.positions)));
                         }
                     }
                 }

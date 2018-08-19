@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 namespace BaghChal
 {
 
-    public class GameBoard : ICloneable
+    public class GameBoard
     {
         #region Properties and fields
-
+        
         /// <summary>
         /// Holds the state of the board.
         /// First index is for tigers, goats, and both.
@@ -28,11 +28,11 @@ namespace BaghChal
         /// Ply is a half turn in the game.
         /// One turn is a move by first goat then by tiger. So a ply is the move of one of them.
         /// </summary>
-        public int Ply { get; private set; } = 0;
+        public readonly int Ply = 0;
 
-        public int GoatsLeftToPlace { get; private set; } = 20;
+        public readonly int GoatsLeftToPlace = 20;
 
-        public int GoatsCaptured { get; private set; } = 0;
+        public readonly int GoatsCaptured = 0;
 
         #endregion
 
@@ -84,12 +84,7 @@ namespace BaghChal
         #endregion
 
         #region interfaces
-
-        public object Clone()
-        {
-            return new GameBoard(Board, CurrentUsersTurn, Ply, GoatsLeftToPlace, GoatsCaptured);
-        }
-
+        
         #endregion
 
         #region overrides
@@ -298,10 +293,12 @@ namespace BaghChal
         /// <summary>
         /// Progress the game forward one ply.
         /// </summary>
-        private void Tick()
+        private (Pieces NextPlayerTurn, int Ply) Tick()
         {
-            CurrentUsersTurn = (CurrentUsersTurn == Pieces.Goat) ? Pieces.Tiger : Pieces.Goat;
-            Ply++;
+            return (
+                (CurrentUsersTurn == Pieces.Goat) ? Pieces.Tiger : Pieces.Goat,
+                Ply + 1
+                );
         }
 
         /// <summary>
@@ -440,37 +437,37 @@ namespace BaghChal
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        public MoveResult Move(Pieces piece, (int x, int y) start, (int x, int y) end)
+        public (MoveResult move, GameBoard nextState) Move(Pieces piece, (int x, int y) start, (int x, int y) end)
         {
             var move = TryMove(piece, start, end);
             return MoveDanger(piece, start, end, move);
-
         }
 
         /// <summary>
         /// This move function skips the TryMove check. Used to speed up the AI. Use with care.
         /// </summary>
-        public MoveResult MoveDanger(Pieces piece, (int x, int y) start, (int x, int y) end, MoveResult move)
+        public (MoveResult move, GameBoard nextState) MoveDanger(Pieces piece, (int x, int y) start, (int x, int y) end, MoveResult move)
         {
             var endIndex = TranslateToBoardIndex(end);
             var startIndex = TranslateToBoardIndex(start);
+            GameBoard nextState;
             switch (move)
             {
                 case MoveResult.GoatPlaced:
-                    PerformGameMove(piece, -1, endIndex);
+                    nextState = PerformGameMove(piece, -1, endIndex);
                     return //(CheckGameEnd(piece)) ? MoveResult.GoatWin : 
-                    move;
+                    (move, nextState);
                 case MoveResult.GoatCaptured:
                     IsJumpValid(piece, startIndex, endIndex, out int captureIndex);
-                    PerformGameMove(piece, startIndex, endIndex, captureIndex);
+                    nextState = PerformGameMove(piece, startIndex, endIndex, captureIndex);
                     return //(CheckGameEnd(piece)) ? MoveResult.TigerWin : 
-                    move;
+                    (move, nextState);
                 case MoveResult.MoveOK:
-                    PerformGameMove(piece, startIndex, endIndex);
+                    nextState = PerformGameMove(piece, startIndex, endIndex);
                     return //(CheckGameEnd(piece)) ? MoveResult.GoatWin : 
-                    move;
+                    (move, nextState);
             }
-            return move;
+            throw new ArgumentException($"Move of type {move} is not valid.");
         }
 
         /// <summary>
@@ -532,47 +529,57 @@ namespace BaghChal
         /// <param name="startIndex"></param>
         /// <param name="endIndex"></param>
         /// <param name="captureIndex"></param>
-        private void PerformGameMove(Pieces piece, int startIndex, int endIndex, int captureIndex = -1)
+        private GameBoard PerformGameMove(Pieces piece, int startIndex, int endIndex, int captureIndex = -1)
         {
+            var returnBoard = new long[3];
+            returnBoard[(int)Pieces.Tiger] = Board[(int)Pieces.Tiger];
+            returnBoard[(int)Pieces.Goat] = Board[(int)Pieces.Goat];
+            returnBoard[(int)Pieces.Any] = Board[(int)Pieces.Any];
+            var goatsLeftToPlace = GoatsLeftToPlace;
+            var goatsCaptured = GoatsCaptured;
+
             if (captureIndex != -1)
             {
                 var helper = this.Board;
                 var shiftToRemoveGoat = ~(1L << captureIndex);
                 // clear goat.
-                Board[(int)Pieces.Goat] = Board[(int)Pieces.Goat] & shiftToRemoveGoat;
-                Board[(int)Pieces.Any] = Board[(int)Pieces.Any] & shiftToRemoveGoat;
+                returnBoard[(int)Pieces.Goat] = returnBoard[(int)Pieces.Goat] & shiftToRemoveGoat;
+                returnBoard[(int)Pieces.Any] = returnBoard[(int)Pieces.Any] & shiftToRemoveGoat;
                 // Move tiger.
                 // TODO: Can this be done in one operation? Yes, OR the indexes and then XOR the array!
                 // Maybe just OR the Any Bord to save one operation.
                 long shiftToRemove = ~(1L << startIndex);
                 long shift = (1L << endIndex);
-                Board[(int)Pieces.Tiger] = Board[(int)Pieces.Tiger] & shiftToRemove;
-                Board[(int)Pieces.Tiger] = Board[(int)Pieces.Tiger] | shift;
-                Board[(int)Pieces.Any] = Board[(int)Pieces.Any] & shiftToRemove;
-                Board[(int)Pieces.Any] = Board[(int)Pieces.Any] | shift;
-                GoatsCaptured++;
+                returnBoard[(int)Pieces.Tiger] = returnBoard[(int)Pieces.Tiger] & shiftToRemove;
+                returnBoard[(int)Pieces.Tiger] = returnBoard[(int)Pieces.Tiger] | shift;
+                returnBoard[(int)Pieces.Any] = returnBoard[(int)Pieces.Any] & shiftToRemove;
+                returnBoard[(int)Pieces.Any] = returnBoard[(int)Pieces.Any] | shift;
+                goatsCaptured++;
             }
             // Place goat.
             else if (startIndex == -1)
             {
                 long shift = (1L << endIndex);
-                Board[(int)Pieces.Goat] = Board[(int)Pieces.Goat] | shift;
-                Board[(int)Pieces.Any] = Board[(int)Pieces.Any] | shift;
-                GoatsLeftToPlace--;
+                returnBoard[(int)Pieces.Goat] = returnBoard[(int)Pieces.Goat] | shift;
+                returnBoard[(int)Pieces.Any] = returnBoard[(int)Pieces.Any] | shift;
+                goatsLeftToPlace--;
             }
             // Else normal move.
             else
             {
                 long shiftToRemove = ~(1L << startIndex);
                 long shift = (1L << endIndex);
-                Board[(int)piece] = Board[(int)piece] & shiftToRemove;
-                Board[(int)piece] = Board[(int)piece] | shift;
-                Board[(int)Pieces.Any] = Board[(int)Pieces.Any] & shiftToRemove;
-                Board[(int)Pieces.Any] = Board[(int)Pieces.Any] | shift;
+                returnBoard[(int)piece] = returnBoard[(int)piece] & shiftToRemove;
+                returnBoard[(int)piece] = returnBoard[(int)piece] | shift;
+                returnBoard[(int)Pieces.Any] = returnBoard[(int)Pieces.Any] & shiftToRemove;
+                returnBoard[(int)Pieces.Any] = returnBoard[(int)Pieces.Any] | shift;
             }
 
-            Tick();
-            return;
+            var(nextPlayerTurn, ply) = Tick();
+
+            var nextState = new GameBoard(returnBoard, nextPlayerTurn, ply, goatsLeftToPlace, goatsCaptured);
+
+            return nextState;
         }
 
         #endregion
