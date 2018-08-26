@@ -64,6 +64,7 @@
   <ItemGroup>
     <Compile Include="BaghChal.cs" />
     <Compile Include="GameEnums.cs" />
+    <Compile Include="GamePiece.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

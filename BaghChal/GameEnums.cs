@@ -30,6 +30,7 @@ namespace BaghChal
         GoatMoveDuringPlacement = 12,
         GoatPlaced = 13,
         InvalidJump = 14,
+        MoveNotImplemented = 15,
     }
 
     public enum MoveType : int

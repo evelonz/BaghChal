@@ -19,6 +19,14 @@ namespace BaghChal
         /// </summary>
         private long[] Board { get; set; }
 
+        public long this[Pieces index]
+        {
+            get
+            {
+                return Board[(int)index];
+            }
+        }
+
         /// <summary>
         /// The player who may move next. Tiger starts.
         /// </summary>
@@ -233,7 +241,7 @@ namespace BaghChal
         /// Can only be done by a tiger.
         /// Must be done over a goat, into a empty space.
         /// </summary>
-        private bool IsJumpValid(Pieces piece, int start, int end, out int captureIndex)
+        internal bool IsJumpValid(Pieces piece, int start, int end, out int captureIndex)
         {
             captureIndex = -1;
             if (piece != Pieces.Tiger)
@@ -280,7 +288,7 @@ namespace BaghChal
         /// </summary>
         /// <param name="position"></param>
         /// <returns></returns>
-        private bool IsOutOfBounds((int x, int y) position)
+        public static bool IsOutOfBounds((int x, int y) position)
         {
             return position.x < 1 || position.y < 1 ||
                 position.x > 5 || position.y > 5;
