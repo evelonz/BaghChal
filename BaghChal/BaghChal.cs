@@ -467,7 +467,7 @@ namespace BaghChal
                     return //(CheckGameEnd(piece)) ? MoveResult.GoatWin : 
                     (move, nextState);
             }
-            throw new ArgumentException($"Move of type {move} is not valid.");
+            return (move, this);
         }
 
         /// <summary>
