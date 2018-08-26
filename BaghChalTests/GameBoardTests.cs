@@ -65,24 +65,24 @@ namespace BaghChal.Tests
 
             // Out of turn move.
             var result = board.Move(Pieces.Tiger, (1, 1), (2, 1));
-            Assert.AreEqual(MoveResult.NotPlayersTurn, result, "Tiger able to move out of turn.");
+            Assert.AreEqual(MoveResult.NotPlayersTurn, result.move, "Tiger able to move out of turn.");
             // Move goat during placement.
-            result = board.Move(Pieces.Goat, (3, 3), (3, 4));
-            Assert.AreEqual(MoveResult.GoatMoveDuringPlacement, result, "Goat able to move during placement.");
+            result = result.nextState.Move(Pieces.Goat, (3, 3), (3, 4));
+            Assert.AreEqual(MoveResult.GoatMoveDuringPlacement, result.move, "Goat able to move during placement.");
             // Place goat in incorrect space.
-            result = board.Move(Pieces.Goat, (0, 0), (-3, 4));
-            Assert.AreEqual(MoveResult.OutOfBounds, result, "Goat able to be placed out of bounds.");
-            result = board.Move(Pieces.Goat, (0, 0), (1, 3));
-            Assert.AreEqual(MoveResult.TargetLocationOccupied, result, "Goat able to be placed on other goat.");
-            result = board.Move(Pieces.Goat, (0, 0), (1, 4));
-            Assert.AreEqual(MoveResult.TargetLocationOccupied, result, "Goat able to be placed on tiger.");
+            result = result.nextState.Move(Pieces.Goat, (0, 0), (-3, 4));
+            Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Goat able to be placed out of bounds.");
+            result = result.nextState.Move(Pieces.Goat, (0, 0), (1, 3));
+            Assert.AreEqual(MoveResult.TargetLocationOccupied, result.move, "Goat able to be placed on other goat.");
+            result = result.nextState.Move(Pieces.Goat, (0, 0), (1, 4));
+            Assert.AreEqual(MoveResult.TargetLocationOccupied, result.move, "Goat able to be placed on tiger.");
             // Move incorrect piece.
-            result = board.Move(Pieces.Goat, (1, 1), (2, 1));
-            Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result, "Goat able to move tiger.");
-            result = board.Move(Pieces.Goat, (2, 1), (2, 2));
-            Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result, "Goat able to move empty space.");
-            result = board.Move(Pieces.Goat, (2, -1), (2, -2));
-            Assert.AreEqual(MoveResult.OutOfBounds, result, "Goat able to move empty space out of bounds.");
+            result = result.nextState.Move(Pieces.Goat, (1, 1), (2, 1));
+            Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result.move, "Goat able to move tiger.");
+            result = result.nextState.Move(Pieces.Goat, (2, 1), (2, 2));
+            Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result.move, "Goat able to move empty space.");
+            result = result.nextState.Move(Pieces.Goat, (2, -1), (2, -2));
+            Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Goat able to move empty space out of bounds.");
 
             // Set board to tigers turn.
             board = new GameBoard(7, 16, 0, Pieces.Tiger,
@@ -91,37 +91,37 @@ namespace BaghChal.Tests
                 );
             // Move incorrect piece.
             result = board.Move(Pieces.Tiger, (3, 3), (3, 4));
-            Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result, "Tiger able to move Goat.");
-            result = board.Move(Pieces.Tiger, (2, 1), (2, 2));
-            Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result, "Tiger able to move empty space.");
-            result = board.Move(Pieces.Tiger, (2, -1), (2, -2));
-            Assert.AreEqual(MoveResult.OutOfBounds, result, "Tiger able to move empty space out of bounds.");
+            Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result.move, "Tiger able to move Goat.");
+            result = result.nextState.Move(Pieces.Tiger, (2, 1), (2, 2));
+            Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result.move, "Tiger able to move empty space.");
+            result = result.nextState.Move(Pieces.Tiger, (2, -1), (2, -2));
+            Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Tiger able to move empty space out of bounds.");
 
             // Move out of bounds.
-            result = board.Move(Pieces.Tiger, (1, 1), (1, 0));
-            Assert.AreEqual(MoveResult.OutOfBounds, result, "Tiger able to move out of bounds.");
+            result = result.nextState.Move(Pieces.Tiger, (1, 1), (1, 0));
+            Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Tiger able to move out of bounds.");
             // Jump over incorrect piece.
-            result = board.Move(Pieces.Tiger, (1, 4), (3, 4));
-            Assert.AreEqual(MoveResult.InvalidJump, result, "Tiger able to jump tiger.");
-            result = board.Move(Pieces.Tiger, (1, 1), (3, 1));
-            Assert.AreEqual(MoveResult.InvalidJump, result, "Tiger able to jump over empty space.");
+            result = result.nextState.Move(Pieces.Tiger, (1, 4), (3, 4));
+            Assert.AreEqual(MoveResult.InvalidJump, result.move, "Tiger able to jump tiger.");
+            result = result.nextState.Move(Pieces.Tiger, (1, 1), (3, 1));
+            Assert.AreEqual(MoveResult.InvalidJump, result.move, "Tiger able to jump over empty space.");
             // Jump to incorrect piece.
-            result = board.Move(Pieces.Tiger, (2, 2), (2, 4));
-            Assert.AreEqual(MoveResult.TargetLocationOccupied, result, "Tiger able to jump over goat to tiger.");
-            result = board.Move(Pieces.Tiger, (2, 2), (0, 2));
-            Assert.AreEqual(MoveResult.OutOfBounds, result, "Tiger able to jump over goat to out of bounds.");
-            result = board.Move(Pieces.Tiger, (1, 1), (1, 3));
-            Assert.AreEqual(MoveResult.TargetLocationOccupied, result, "Tiger able to jump over goat to goat.");
+            result = result.nextState.Move(Pieces.Tiger, (2, 2), (2, 4));
+            Assert.AreEqual(MoveResult.TargetLocationOccupied, result.move, "Tiger able to jump over goat to tiger.");
+            result = result.nextState.Move(Pieces.Tiger, (2, 2), (0, 2));
+            Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Tiger able to jump over goat to out of bounds.");
+            result = result.nextState.Move(Pieces.Tiger, (1, 1), (1, 3));
+            Assert.AreEqual(MoveResult.TargetLocationOccupied, result.move, "Tiger able to jump over goat to goat.");
             // Move out of reach.
-            result = board.Move(Pieces.Tiger, (1, 4), (2, 5));
-            Assert.AreEqual(MoveResult.TargetLocationOutOfReach, result, "Tiger able to move where link is missing.");
+            result = result.nextState.Move(Pieces.Tiger, (1, 4), (2, 5));
+            Assert.AreEqual(MoveResult.TargetLocationOutOfReach, result.move, "Tiger able to move where link is missing.");
             //result = board.Move(Pieces.Tiger, (1, 1), (1, 3));
             //Assert.AreEqual(MoveResult.OutOfBounds, result, "Tiger able to jump where link is missing.");
-            result = board.Move(Pieces.Tiger, (2, 4), (5, 4));
-            Assert.AreEqual(MoveResult.TargetLocationOutOfReach, result, "Tiger able to jump too long.");
+            result = result.nextState.Move(Pieces.Tiger, (2, 4), (5, 4));
+            Assert.AreEqual(MoveResult.TargetLocationOutOfReach, result.move, "Tiger able to jump too long.");
             // Move to current place.
-            result = board.Move(Pieces.Tiger, (1, 1), (1, 1));
-            Assert.AreEqual(MoveResult.TargetLocationOccupied, result, "Tiger able to move in place.");
+            result = result.nextState.Move(Pieces.Tiger, (1, 1), (1, 1));
+            Assert.AreEqual(MoveResult.TargetLocationOccupied, result.move, "Tiger able to move in place.");
 
             // Set board to goats move turn.
             board = new GameBoard(7, 0, 3, Pieces.Goat,
@@ -130,43 +130,43 @@ namespace BaghChal.Tests
                 );
             // Move out of bounds.
             result = board.Move(Pieces.Goat, (1, 2), (0, 2));
-            Assert.AreEqual(MoveResult.OutOfBounds, result, "Goat able to move out of bounds.");
+            Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Goat able to move out of bounds.");
             // Jump over incorrect piece.
-            result = board.Move(Pieces.Goat, (1, 2), (3, 2));
-            Assert.AreEqual(MoveResult.InvalidJump, result, "Goat able to jump tiger.");
-            result = board.Move(Pieces.Goat, (3, 3), (5, 3));
-            Assert.AreEqual(MoveResult.InvalidJump, result, "Goat able to jump over empty space.");
-            result = board.Move(Pieces.Goat, (2, 3), (4, 3));
-            Assert.AreEqual(MoveResult.InvalidJump, result, "Goat able to jump over goat.");
+            result = result.nextState.Move(Pieces.Goat, (1, 2), (3, 2));
+            Assert.AreEqual(MoveResult.InvalidJump, result.move, "Goat able to jump tiger.");
+            result = result.nextState.Move(Pieces.Goat, (3, 3), (5, 3));
+            Assert.AreEqual(MoveResult.InvalidJump, result.move, "Goat able to jump over empty space.");
+            result = result.nextState.Move(Pieces.Goat, (2, 3), (4, 3));
+            Assert.AreEqual(MoveResult.InvalidJump, result.move, "Goat able to jump over goat.");
             // Jump to incorrect piece.
-            result = board.Move(Pieces.Goat, (1, 3), (1, 1));
-            Assert.AreEqual(MoveResult.TargetLocationOccupied, result, "Goat able to jump over goat to tiger.");
-            result = board.Move(Pieces.Goat, (2, 3), (0, 3));
-            Assert.AreEqual(MoveResult.OutOfBounds, result, "Goat able to jump over goat to out of bounds.");
-            result = board.Move(Pieces.Goat, (1, 3), (3, 3));
-            Assert.AreEqual(MoveResult.TargetLocationOccupied, result, "Goat able to jump over goat to goat.");
+            result = result.nextState.Move(Pieces.Goat, (1, 3), (1, 1));
+            Assert.AreEqual(MoveResult.TargetLocationOccupied, result.move, "Goat able to jump over goat to tiger.");
+            result = result.nextState.Move(Pieces.Goat, (2, 3), (0, 3));
+            Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Goat able to jump over goat to out of bounds.");
+            result = result.nextState.Move(Pieces.Goat, (1, 3), (3, 3));
+            Assert.AreEqual(MoveResult.TargetLocationOccupied, result.move, "Goat able to jump over goat to goat.");
             // Move out of reach.
-            result = board.Move(Pieces.Goat, (2, 3), (3, 4));
-            Assert.AreEqual(MoveResult.TargetLocationOutOfReach, result, "Goat able to move where link is missing.");
+            result = result.nextState.Move(Pieces.Goat, (2, 3), (3, 4));
+            Assert.AreEqual(MoveResult.TargetLocationOutOfReach, result.move, "Goat able to move where link is missing.");
             //result = board.Move(Pieces.Goat, (2, 3), (1, 3));
             //Assert.AreEqual(MoveResult.OutOfBounds, result, "Goat able to jump where link is missing.");
-            result = board.Move(Pieces.Goat, (2, 3), (4, 3));
-            Assert.AreEqual(MoveResult.InvalidJump, result, "Goat able to jump too long.");
+            result = result.nextState.Move(Pieces.Goat, (2, 3), (4, 3));
+            Assert.AreEqual(MoveResult.InvalidJump, result.move, "Goat able to jump too long.");
 
             // Test valid moves.
-            result = board.Move(Pieces.Goat, (3, 3), (4, 3));
-            Assert.AreEqual(MoveResult.MoveOK, result, "Goat unable to move one space.");
-            result = board.Move(Pieces.Tiger, (1, 1), (2, 1));
-            Assert.AreEqual(MoveResult.MoveOK, result, "Tiger unable to move one space.");
-            result = board.Move(Pieces.Goat, (2, 3), (3, 3));
-            Assert.AreEqual(MoveResult.MoveOK, result, "Goat unable to move one space.");
-            result = board.Move(Pieces.Tiger, (2, 2), (4, 4));
-            Assert.AreEqual(MoveResult.GoatCaptured, result, "Tiger unable to capture goat.");
-            result = board.Move(Pieces.Goat, (1, 3), (2, 3));
-            Assert.AreEqual(MoveResult.MoveOK, result, "Goat unable to move one space.");
-            result = board.Move(Pieces.Tiger, (2, 4), (2, 2));
-            Assert.AreEqual(MoveResult.GoatCaptured, result, "Tiger unable to make winning move.");
-            var GameEnd = board.CheckGameEnd(Pieces.Tiger);
+            result = result.nextState.Move(Pieces.Goat, (3, 3), (4, 3));
+            Assert.AreEqual(MoveResult.MoveOK, result.move, "Goat unable to move one space.");
+            result = result.nextState.Move(Pieces.Tiger, (1, 1), (2, 1));
+            Assert.AreEqual(MoveResult.MoveOK, result.move, "Tiger unable to move one space.");
+            result = result.nextState.Move(Pieces.Goat, (2, 3), (3, 3));
+            Assert.AreEqual(MoveResult.MoveOK, result.move, "Goat unable to move one space.");
+            result = result.nextState.Move(Pieces.Tiger, (2, 2), (4, 4));
+            Assert.AreEqual(MoveResult.GoatCaptured, result.move, "Tiger unable to capture goat.");
+            result = result.nextState.Move(Pieces.Goat, (1, 3), (2, 3));
+            Assert.AreEqual(MoveResult.MoveOK, result.move, "Goat unable to move one space.");
+            result = result.nextState.Move(Pieces.Tiger, (2, 4), (2, 2));
+            Assert.AreEqual(MoveResult.GoatCaptured, result.move, "Tiger unable to make winning move.");
+            var GameEnd = result.nextState.CheckGameEnd(Pieces.Tiger);
             Assert.AreEqual(true, GameEnd, "Tiger unable to win.");
             // Set board up for goat win.
             //TTGG- 
@@ -182,8 +182,8 @@ namespace BaghChal.Tests
                 (Pieces.Goat, (3, 3)), (Pieces.Goat, (4, 4))
                 );
             result = board.Move(Pieces.Goat, (5, 2), (4, 2));
-            Assert.AreEqual(MoveResult.MoveOK, result, "Goat unable to make winning move.");
-            GameEnd = board.CheckGameEnd(Pieces.Goat);
+            Assert.AreEqual(MoveResult.MoveOK, result.move, "Goat unable to make winning move.");
+            GameEnd = result.nextState.CheckGameEnd(Pieces.Goat);
             Assert.AreEqual(true, GameEnd, "Goat unable to win.");
 
             // Test if Tiger finds jump to escape.
@@ -194,7 +194,7 @@ namespace BaghChal.Tests
                 (Pieces.Goat, (3, 3)), (Pieces.Goat, (4, 4))
                 );
             result = board.Move(Pieces.Goat, (5, 2), (5, 3));
-            Assert.AreEqual(MoveResult.MoveOK, result, "Tiger unable to escape loss using jump.");
+            Assert.AreEqual(MoveResult.MoveOK, result.move, "Tiger unable to escape loss using jump.");
 
 
             // Test if board position has occured before.
