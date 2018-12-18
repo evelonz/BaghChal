@@ -19,6 +19,7 @@ namespace BaghChalAI
             var res = AlphaBetaPruning(node, 6, true, int.MinValue, int.MaxValue);
             return res;
         }
+
         /// <summary>
         /// Simple minimax function.
         /// Some stats:
@@ -142,7 +143,8 @@ namespace BaghChalAI
             {
                 var bestVal = int.MaxValue;
                 GameMove bestMove = new GameMove(-1);
-                foreach (var move in node.GetChildNodes())
+                var childNodes = node.GetChildNodes();
+                foreach (var move in childNodes)
                 {
                     var res = AlphaBetaPruning(move, depth - 1, !maximizing, alpha, beta);
                     checkedNodes += res.Checks;

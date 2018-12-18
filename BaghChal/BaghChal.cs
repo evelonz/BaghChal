@@ -487,6 +487,8 @@ namespace BaghChal
         /// <returns></returns>
         public MoveResult TryMove(Pieces piece, (int x, int y) start, (int x, int y) end)
         {
+            var mover = new GamePiece() { Piece = piece };
+            return mover.TryMove(this, start, end);
             // Perhaps split the move validation into static and none static?
             if (piece != CurrentUsersTurn)
                 return MoveResult.NotPlayersTurn;

@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace BaghChal
 {
-    abstract class GamePiece
+    public class GamePiece
     {
         /// <summary>
         /// Set here since it is used in a lot of logic.
         /// Of not here, then it would have to be hardcoded in each derived
         /// class. Not sure what is best.
         /// </summary>
-        protected Pieces Piece { get; set; }
+        public Pieces Piece { get; set; }
 
         public MoveResult TryMove(GameBoard board, (int x, int y) start, (int x, int y) end)
         {
@@ -31,15 +31,19 @@ namespace BaghChal
             var startIndex = GameBoard.TranslateToBoardIndex(start);
             
             if(TryToMoveIncorrectPiece(board, Piece, startIndex))
-                    return MoveResult.TryToMoveIncorrectPiece;
+                return MoveResult.TryToMoveIncorrectPiece;
 
             var moveType = GameBoard.PositionsAreLinked(startIndex, endIndex);
-            if (LocationOutOfReach(moveType))
+            if (LocationOutOfReach(moveType, startIndex))
                 return MoveResult.TargetLocationOutOfReach;
 
             // this function has to be overriden. Children can call this,
             // and then implement thire piece move in the end.
-            return MoveResult.MoveNotImplemented;
+            if(Piece == Pieces.Tiger)
+            {
+                return TryMoveTiger(board, moveType, startIndex, endIndex);
+            }
+            return TryMoveGoat(board, moveType, startIndex, endIndex);
         }
 
         #region TempImplementationOfMoves
@@ -61,14 +65,19 @@ namespace BaghChal
 
         public MoveResult TryMoveGoat(GameBoard board, MoveType moveType, int startIndex, int endIndex)
         {
-            if (Piece == Pieces.Goat && startIndex == 0)
+            if (startIndex == 0)
             {
                 if(board.GoatsLeftToPlace != 0)
                 {
-                    return MoveResult.GoatMoveDuringPlacement;
+                    return MoveResult.GoatPlaced;
                 }
-                return MoveResult.GoatPlaced;
+                return MoveResult.OutOfBounds;
             }
+            else if (startIndex != 0 && board.GoatsLeftToPlace != 0)
+            {
+                return MoveResult.GoatMoveDuringPlacement;
+            }
+            else if (moveType == MoveType.Jump) return MoveResult.InvalidJump;
             // All checks should have passed. Now perform normal 1 slot move.
             return MoveResult.MoveOK;
         }
@@ -80,8 +89,9 @@ namespace BaghChal
         protected bool NotCurrentPlyersTurn(Pieces tryingToMove, Pieces CurrentPlayersTurn)
             => tryingToMove != CurrentPlayersTurn;
 
-        protected bool LocationOutOfReach(MoveType moveType)
+        protected bool LocationOutOfReach(MoveType moveType, int startIndex)
         {
+            if (Piece == Pieces.Goat && startIndex == 0) return false;
             if (moveType == MoveType.OutOfReach)
                 return true;
             return false;

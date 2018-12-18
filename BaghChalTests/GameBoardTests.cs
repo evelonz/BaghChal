@@ -79,10 +79,13 @@ namespace BaghChal.Tests
             // Move incorrect piece.
             result = result.nextState.Move(Pieces.Goat, (1, 1), (2, 1));
             Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result.move, "Goat able to move tiger.");
-            result = result.nextState.Move(Pieces.Goat, (2, 1), (2, 2));
+            result = result.nextState.Move(Pieces.Goat, (2, 1), (3, 2));
             Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result.move, "Goat able to move empty space.");
             result = result.nextState.Move(Pieces.Goat, (2, -1), (2, -2));
             Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Goat able to move empty space out of bounds.");
+            // Able to set goat
+            result = result.nextState.Move(Pieces.Goat, (0, 0), (4, 3));
+            Assert.AreEqual(MoveResult.GoatPlaced, result.move, "Goat not able to be placed.");
 
             // Set board to tigers turn.
             board = new GameBoard(7, 16, 0, Pieces.Tiger,
@@ -92,7 +95,7 @@ namespace BaghChal.Tests
             // Move incorrect piece.
             result = board.Move(Pieces.Tiger, (3, 3), (3, 4));
             Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result.move, "Tiger able to move Goat.");
-            result = result.nextState.Move(Pieces.Tiger, (2, 1), (2, 2));
+            result = result.nextState.Move(Pieces.Tiger, (2, 1), (3, 2));
             Assert.AreEqual(MoveResult.TryToMoveIncorrectPiece, result.move, "Tiger able to move empty space.");
             result = result.nextState.Move(Pieces.Tiger, (2, -1), (2, -2));
             Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Tiger able to move empty space out of bounds.");
@@ -152,6 +155,10 @@ namespace BaghChal.Tests
             //Assert.AreEqual(MoveResult.OutOfBounds, result, "Goat able to jump where link is missing.");
             result = result.nextState.Move(Pieces.Goat, (2, 3), (4, 3));
             Assert.AreEqual(MoveResult.InvalidJump, result.move, "Goat able to jump too long.");
+            // Try and palce during move turn
+            // TODO: The return types are not good enuogh... Now we get target out of reach. If we do (0,0), (0,1) we would get an out of bounds instead.
+            result = result.nextState.Move(Pieces.Goat, (0, 0), (4, 3));
+            Assert.AreEqual(MoveResult.OutOfBounds, result.move, "Goat able to be placed during move turn.");
 
             // Test valid moves.
             result = result.nextState.Move(Pieces.Goat, (3, 3), (4, 3));
