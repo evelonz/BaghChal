@@ -70,6 +70,10 @@
       <Project>{7ae1621d-9dc3-4306-be9b-651265178773}</Project>
       <Name>BaghChal</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MiniMaxStandard\MiniMaxStandard.csproj">
+      <Project>{54bfb996-26c4-48bd-afe0-b5f0bd0f829c}</Project>
+      <Name>MiniMaxStandard</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

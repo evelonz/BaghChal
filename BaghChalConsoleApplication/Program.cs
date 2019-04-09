@@ -20,7 +20,7 @@ namespace BaghChalConsoleApplication
             {
                 //HumanMove(board);
                 board = AIMove(board, sw);
-                board = AIMove(board, sw);
+                board = AIMove2(board, sw);
             }
             sw2.Stop();
             Console.WriteLine(sw2.ElapsedMilliseconds);
@@ -74,7 +74,18 @@ namespace BaghChalConsoleApplication
             sw.Stop();
             var aiRes = board.Move(move.Piece, move.Start, move.End);
             Console.WriteLine($"MoveResult: {aiRes.move}, Time (ms): {sw.ElapsedMilliseconds}, Checks/ms: {move.Checks/(sw.ElapsedMilliseconds+1)}, {move.ToString()}.");
-            Console.WriteLine(board.ToString());
+            Console.WriteLine(aiRes.nextState.ToString());
+            return aiRes.nextState;
+        }
+
+        private static GameBoard AIMove2(GameBoard board, System.Diagnostics.Stopwatch sw)
+        {
+            sw.Restart();
+            var move = BaghChalAI.MinMaxExternal.GetMove(board);
+            sw.Stop();
+            var aiRes = board.Move(move.Piece, move.Start, move.End);
+            Console.WriteLine($"MoveResult2: {aiRes.move}, Time (ms): {sw.ElapsedMilliseconds}, Checks/ms: {move.Checks / (sw.ElapsedMilliseconds + 1)}, {move.ToString()}.");
+            Console.WriteLine(aiRes.nextState.ToString());
             return aiRes.nextState;
         }
 
