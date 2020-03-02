@@ -19,8 +19,10 @@ namespace BaghChalConsoleApplication
             while(numberOfTestTurns-- > 0)
             {
                 //HumanMove(board);
-                board = AIMove(board, sw);
+                //board = AIMove(board, sw);
                 board = AIMove2(board, sw);
+                board = AIMove3(board, sw);
+                Console.ReadKey();
             }
             sw2.Stop();
             Console.WriteLine(sw2.ElapsedMilliseconds);
@@ -85,6 +87,17 @@ namespace BaghChalConsoleApplication
             sw.Stop();
             var aiRes = board.Move(move.Piece, move.Start, move.End);
             Console.WriteLine($"MoveResult2: {aiRes.move}, Time (ms): {sw.ElapsedMilliseconds}, Checks/ms: {move.Checks / (sw.ElapsedMilliseconds + 1)}, {move.ToString()}.");
+            Console.WriteLine(aiRes.nextState.ToString());
+            return aiRes.nextState;
+        }
+
+        private static GameBoard AIMove3(GameBoard board, System.Diagnostics.Stopwatch sw)
+        {
+            sw.Restart();
+            var move = BaghChalAI.MinMaxExternalParallel.GetMove(board);
+            sw.Stop();
+            var aiRes = board.Move(move.Piece, move.Start, move.End);
+            Console.WriteLine($"MoveResult3: {aiRes.move}, Time (ms): {sw.ElapsedMilliseconds}, Checks/ms: {move.Checks / (sw.ElapsedMilliseconds + 1)}, {move.ToString()}.");
             Console.WriteLine(aiRes.nextState.ToString());
             return aiRes.nextState;
         }

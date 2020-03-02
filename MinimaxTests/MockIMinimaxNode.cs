@@ -154,16 +154,14 @@ namespace MinimaxTests
     /// </summary>
     public class FiniteMockIMinimaxNode : MockIMinimaxNode
     {
-        private int NumberOfLevels;
-        private int NumberOfChildrenPerLevel;
+        private readonly int NumberOfLevels;
+        private readonly int NumberOfChildrenPerLevel;
 
         public FiniteMockIMinimaxNode(int numberOfLevels, int numberOfChildrenPerLevel) : base(0)
         {
             NumberOfLevels = numberOfLevels;
             NumberOfChildrenPerLevel = numberOfChildrenPerLevel;
         }
-
-        private FiniteMockIMinimaxNode(int value) : base(value) { }
 
         public override IEnumerable<IMinimaxNode<MockIGameMove>> GetChildren()
         {
@@ -179,7 +177,5 @@ namespace MinimaxTests
         {
             return NumberOfLevels == 0;
         }
-
-        public int TotalNumberOfNodes => NumberOfLevels * NumberOfChildrenPerLevel;
     }
 }

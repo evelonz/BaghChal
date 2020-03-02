@@ -10,5 +10,10 @@ namespace MiniMaxStandard
         {
             return AlphaBeta ? (IMinimaxRunner<TGameMove>)new AlphaBetaPruning<TGameMove>() : new Minimax<TGameMove>();
         }
+
+        public static IMinimaxParallelRunner<TGameMove> GetParallelInstance<TGameMove>() where TGameMove : IGameMove, new()
+        {
+            return new AlphaBetaPruningParallel<TGameMove>();
+        }
     }
 }

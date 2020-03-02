@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace MiniMaxStandard
 {
     public interface IMinimaxRunner<TGameMove> where TGameMove : IGameMove, new()
