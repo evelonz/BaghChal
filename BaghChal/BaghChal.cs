@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace BaghChal
 {
-
-    public class GameBoard
+    [Serializable]
+    public class GameBoard : ISerializable
     {
         #region Properties and fields
-        
+
         /// <summary>
         /// Holds the state of the board.
         /// First index is for tigers, goats, and both.
@@ -41,6 +42,25 @@ namespace BaghChal
         public readonly int GoatsLeftToPlace = 20;
 
         public readonly int GoatsCaptured = 0;
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("Ply", Ply);
+            info.AddValue("CurrentUsersTurn", CurrentUsersTurn);
+            info.AddValue("GoatsLeftToPlace", GoatsLeftToPlace);
+            info.AddValue("GoatsCaptured", GoatsCaptured);
+            info.AddValue("Board", Board);
+
+        }
+
+        public GameBoard(SerializationInfo info, StreamingContext context)
+        {
+            Ply = info.GetInt32("Ply");
+            CurrentUsersTurn = (Pieces)info.GetInt32("CurrentUsersTurn");
+            GoatsLeftToPlace = info.GetInt32("GoatsLeftToPlace");
+            GoatsCaptured = info.GetInt32("GoatsCaptured");
+            Board = (long[])info.GetValue("Board", typeof(long[]));
+        }
 
         #endregion
 
@@ -322,12 +342,12 @@ namespace BaghChal
             {
                 case Pieces.Tiger:
                     if (checkAfterMove)
-                        return (GoatsCaptured == 5);
+                        return (GoatsCaptured >= 5);
                     return !TigerAbleToMove();
                 case Pieces.Goat:
                     if (checkAfterMove)
                         return !TigerAbleToMove();
-                    return (GoatsCaptured == 5);
+                    return (GoatsCaptured >= 5);
                 default:
                     return false;
             }
@@ -592,6 +612,29 @@ namespace BaghChal
             return nextState;
         }
 
+        #endregion
+
+        #region TempExternalHelper 
+        public int[] GetBoardState()
+        {
+            var result = Enumerable.Repeat((int)Pieces.Empty, 25).ToArray();
+            for (int i = 8; i < 41; i++)
+            {
+                var coords = TranslatetFromBoardIndex(i);
+                var newIndex = (coords.x -1) + ((coords.y -1 )* 5);
+                if ((Board[(int)Pieces.Tiger] & (1L << i)) > 0)
+                {
+                    result[newIndex] = (int)Pieces.Tiger;
+                }
+                else if ((Board[(int)Pieces.Goat] & (1L << i)) > 0)
+                {
+                    result[newIndex] = (int)Pieces.Goat;
+                }
+            }
+            return result;
+        }
+
+        
         #endregion
 
         #endregion

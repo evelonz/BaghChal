@@ -8,6 +8,22 @@ using System.Threading.Tasks;
 
 namespace BaghChalAI
 {
+    public class MinMaxExternalParallel
+    {
+        public static GameMove2 GetMove(GameBoard board)
+        {
+            var node = new MinMaxExternalNode(board, board.CurrentUsersTurn, new GameMove2(-1));
+            //var res = MiniMax(node, 4, true);
+
+            //var runner = MiniMaxFactory.GetInstance<GameMove2>();
+            var runner = MiniMaxFactory.GetParallelInstance<GameMove2>();
+            var res = runner.Run(node, 4, true, 10000, Environment.ProcessorCount);
+
+            res.Checks = runner.EndNodesChecked;
+            return res;
+        }
+    }
+
     public class MinMaxExternal
     {
         public static GameMove2 GetMove(GameBoard board)
@@ -40,21 +56,66 @@ namespace BaghChalAI
 
         public int Evaluate()
         {
-            // TODO: Improve this, we need good scores long before a goat is captured or game ends.
             if (Player == Pieces.Goat)
             {
-                if (GameBoard.CheckGameEnd(Pieces.Tiger)) { return int.MaxValue; }
+                if (GameBoard.CheckGameEnd(Pieces.Tiger)) { return int.MinValue; }
             }
             else
             {
                 if (GameBoard.CheckGameEnd(Pieces.Goat)) { return int.MaxValue; }
             }
 
+            return AttempOnBetterValuation();
+        }
+
+        private int NaiveValuation()
+        {
+            // TODO: Improve this, we need good scores long before a goat is captured or game ends.
+
             // Count score for Tiger, then revert for goat.
             int sum = GameBoard.GoatsCaptured * 1000;
             // Adding play to return to try and play longer.
             return (Player == Pieces.Tiger) ? sum : -sum + GameBoard.Ply;
         }
+
+        private int AttempOnBetterValuation()
+        {
+            // This paper used 26 features as input to thier neural network.
+            // Trying to use some of their features.
+            // https://pdfs.semanticscholar.org/a204/1ce875afff7a5d8c6d452e138fdd0e61ca93.pdf
+
+            // Count is for Tiger, inversed for goats.
+            var goatsCaptured = GameBoard.GoatsCaptured * 1000;
+            var tigerMoves = GameBoard.GetTigerMoves();
+            var tigerMoveCount = tigerMoves.Select(s => s.Value.Count).Sum();
+            var trappedTigers = tigerMoves.Count(s => s.Value.Count == 0);
+
+            var tigers = tigerMoves.Keys.ToArray();
+            var manhattanDistance = 0;
+            for (int i = 0; i < tigers.Length - 1; i++)
+            {
+                for (int j = 0; j < tigers.Length; j++)
+                {
+                    manhattanDistance += ManhattanDistance(tigers[i], tigers[j]);
+                }
+            }
+
+            var sum =
+                goatsCaptured * 1000 +
+                tigerMoveCount * 10 +
+                trappedTigers * -500 +
+                manhattanDistance * 8000 +
+                GameBoard.Ply;
+
+            // Adding play to return to try and play longer.
+            return (Player == Pieces.Tiger) ? sum : -sum;
+        }
+
+        public static int ManhattanDistance((int x, int y) self, (int x, int y) target)
+        {
+            return Math.Abs(self.x - target.x) + Math.Abs(self.y - target.y);
+        }
+
         public IEnumerable<IMinimaxNode<GameMove2>> GetChildren()
         {
             // Start just playing the tiger and goat placements.

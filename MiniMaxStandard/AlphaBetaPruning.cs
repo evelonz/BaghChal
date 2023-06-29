@@ -1,5 +1,4 @@
-﻿using MiniMaxStandard;
-using System;
+﻿using System;
 
 namespace MiniMaxStandard
 {
@@ -25,8 +24,9 @@ namespace MiniMaxStandard
             if (depth == 0 || node.IsTerminal())
             {
                 EndNodesChecked++;
-                //var score = node.Evaluate();
-                return node.GetMove();
+                var nextMove = node.GetMove();
+                nextMove.Score = node.Evaluate();
+                return nextMove;
             }
 
             var bestMove = new TGameMove();
